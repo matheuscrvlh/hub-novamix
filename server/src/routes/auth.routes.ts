@@ -12,18 +12,18 @@ async function login(req:FastifyRequest<{Body: loginBody}>, res:FastifyReply) {
     const { user, password } = req.body
 
     try {
-        const searchPasswordUser = db.query(`
-            SELECT password FROM users WHERE $1 = login
+        const searchPasswordUser = await db.query(`
+            SELECT id, password, role FROM users WHERE $1 = login
         `, [user])
 
         if(searchPasswordUser.rows.length === 0) {
-            res.code(401).send({ error: 'Usuario não encontrado.'})
+            return res.code(401).send({ error: 'Usuario não encontrado.'})
         }
 
-        const comparePassword = await verifyPassword(password, searchPasswordUser)
+        const comparePassword = await verifyPassword(password, searchPasswordUser.rows[0].password)
         
         if(!comparePassword) {
-            res.code(401).send({ error: 'Senha inválida.'})
+            return res.code(401).send({ error: 'Senha inválida.'})
         }
 
         const token = await generateToken(
