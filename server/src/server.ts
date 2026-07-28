@@ -3,6 +3,7 @@ import 'dotenv/config'
 import cors from "@fastify/cors";
 import { db } from './database/database.ts'
 import { authRoutes } from "./routes/auth.routes";
+import { usersRoutes } from "./routes/users.routes";
 
 const app = Fastify();
 
@@ -15,6 +16,7 @@ if(!process.env.DATABASE_URL) {
 }
 
 app.register(authRoutes)
+app.register(usersRoutes)
 
 async function start() {
     await app.listen({ port: 3009 });
