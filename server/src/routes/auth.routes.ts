@@ -31,7 +31,7 @@ async function login(req:FastifyRequest<{Body: loginBody}>, res:FastifyReply) {
             searchPasswordUser.rows[0].role
         )
 
-        return token
+        res.code(201).send({ token })
     } catch(error) {
         console.error(error)
         throw new Error('Erro ao efetuar login.')

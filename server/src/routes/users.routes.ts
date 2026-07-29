@@ -1,6 +1,7 @@
 import type { FastifyRequest, FastifyReply, FastifyInstance } from 'fastify';
 import { db } from '../database/database.ts';
 import { hashPassword } from '../utils/hash.ts';
+import { authenticate, checkAdmin } from '../middlewares/auth.middlewares.ts';
 
 type UserRole = 'user' | 'admin';
 
@@ -17,8 +18,7 @@ async function getUsers(res:FastifyReply) {
             SELECT * FROM users
         `);
 
-        res.code(200).send({ success: 'Sucesso ao buscar usuários.' })
-        return search
+        return search.rows
     } catch(error) {
         console.error(error);
         throw new Error('Erro ao buscar usuários.')
@@ -59,6 +59,6 @@ async function postUser(req:FastifyRequest<{Body: UserBody}>, res:FastifyReply) 
 }
 
 export async function usersRoutes(fastify: FastifyInstance) {
-    fastify.get('/user', getUsers);
-    fastify.post('/user', postUser)
+    fastify.get('/users', { preHandler: [authenticate, checkAdmin] }, getUsers );
+    fastify.post('/user', { preHandler: [authenticate, checkAdmin] }, postUser );
 }
