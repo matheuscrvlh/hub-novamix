@@ -1,12 +1,5 @@
-import { Route, Routes } from 'react-router-dom'
+import AppRoutes from './routes/AppRoutes.tsx'
 
 export default function App() {
-
-  return (
-    <>
-      <Routes>
-        <Route path='/' element=''/>
-      </Routes>
-    </>
-  )
+  return <AppRoutes />
 }
