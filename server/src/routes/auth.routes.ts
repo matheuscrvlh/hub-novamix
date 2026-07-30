@@ -1,6 +1,6 @@
 import type { FastifyRequest, FastifyReply, FastifyInstance } from "fastify";
 import { db } from '../database/database.ts'
-import { generateToken, verifyToken } from "../utils/jwt.ts";
+import { generateToken } from "../utils/jwt.ts";
 import { verifyPassword } from "../utils/hash.ts";
 
 type loginBody = {
@@ -26,15 +26,40 @@ async function login(req:FastifyRequest<{Body: loginBody}>, res:FastifyReply) {
             return res.code(401).send({ error: 'Senha inválida.'})
         }
 
+        const permissionsResult = await db.query(`
+            SELECT m.slug AS module, up.access
+            FROM user_permissions up
+            JOIN modules m ON m.id = up.module_id
+            WHERE up.user_id = $1
+        `,[searchPasswordUser.rows[0].id])
+
+        const branchsResult = await db.query(`
+            SELECT b.id, b.name
+            FROM user_branchs ub
+            JOIN branchs b ON b.id = ub.branchs_id
+            WHERE ub.user_id = $1
+        `,[searchPasswordUser.rows[0].id])
+
         const token = await generateToken(
             searchPasswordUser.rows[0].id,
-            searchPasswordUser.rows[0].role
+            searchPasswordUser.rows[0].role,
+            permissionsResult.rows,
+            branchsResult.rows
         )
 
+        res.setCookie('token', token, {
+            domain: '.lojanovamix.com.br',
+            path: '/',
+            httpOnly: true,
+            secure: true,
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24
+        })
+        
         res.code(201).send({ token })
     } catch(error) {
         console.error(error)
-        throw new Error('Erro ao efetuar login.')
+        res.code(500).send({ error: 'Erro ao efetuar login.' })
     }
 }
 

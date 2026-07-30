@@ -9,10 +9,11 @@ declare module 'fastify' {
 
 export async function authenticate(req:FastifyRequest, res:FastifyReply) {
     const authHeader = req.headers['authorization'];
+    const token = req.cookies.token ?? authHeader?.split(' ')[1];
 
-    if(!authHeader) res.code(401).send({ error: 'Autorização não encontrada.' })
-
-    const token = authHeader?.split(' ')[1];
+    if(!token) {
+        return res.code(401).send({ error: 'Autorização não encontrada.' });
+    }
 
     req.user = await verifyToken(token)
 }

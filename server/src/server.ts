@@ -1,6 +1,7 @@
 import Fastify from "fastify"
 import 'dotenv/config'
 import cors from "@fastify/cors";
+import cookie from '@fastify/cookie';
 import { db } from './database/database.ts'
 import { authRoutes } from "./routes/auth.routes";
 import { usersRoutes } from "./routes/users.routes";
@@ -15,6 +16,7 @@ if(!process.env.DATABASE_URL) {
     throw new Error('Erro ao encontrar DATABASE_URL no .env.');
 }
 
+app.register(cookie)
 app.register(authRoutes)
 app.register(usersRoutes)
 
