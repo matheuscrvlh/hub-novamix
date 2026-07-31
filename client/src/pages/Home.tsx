@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.ts'
 import Button from '../components/Button.tsx'
 import Logo from '../components/Logo.tsx'
@@ -19,6 +19,9 @@ export default function Home() {
         logout()
         navigate('/login')
     }
+
+    const isAdmin = role === 'admin'
+    const hasContent = isAdmin || permissions.length > 0
 
     return (
         <main className='w-full min-h-screen bg-gray dark:bg-dark-bg flex flex-col'>
@@ -45,12 +48,31 @@ export default function Home() {
                     Selecione um sistema abaixo para acessar.
                 </p>
 
-                {permissions.length === 0 ? (
+                {!hasContent ? (
                     <div className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border p-8 text-center text-sm text-gray-dark dark:text-dark-text-muted'>
                         Nenhum sistema liberado para o seu usuário ainda. Fale com um administrador.
                     </div>
                 ) : (
                     <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+                        {isAdmin && (
+                            <Link
+                                to='/users'
+                                className='group flex flex-col gap-3 rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border p-5 shadow-sm transition hover:shadow-md hover:-translate-y-0.5'
+                            >
+                                <div className='flex items-center justify-between'>
+                                    <span className='text-base font-semibold text-gray-text dark:text-dark-text'>
+                                        Usuários
+                                    </span>
+                                    <span className='rounded-full bg-blue-base/10 text-blue-base text-xs font-medium px-2 py-1'>
+                                        admin
+                                    </span>
+                                </div>
+                                <span className='text-sm text-gray-dark dark:text-dark-text-muted group-hover:text-orange-base transition'>
+                                    Gerenciar usuários →
+                                </span>
+                            </Link>
+                        )}
+
                         {permissions.map((permission) => (
                             <a
                                 key={permission.module}
