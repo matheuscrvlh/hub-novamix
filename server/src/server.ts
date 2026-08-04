@@ -3,8 +3,9 @@ import 'dotenv/config'
 import cors from "@fastify/cors";
 import cookie from '@fastify/cookie';
 import { db } from './database/database.ts'
-import { authRoutes } from "./routes/auth.routes";
-import { usersRoutes } from "./routes/users.routes";
+import { authRoutes } from "./routes/auth.routes.ts";
+import { usersRoutes } from "./routes/users.routes.ts";
+import { branchsRoutes } from "./routes/branchs.routes.ts";
 
 const app = Fastify();
 
@@ -21,6 +22,7 @@ if(!process.env.DATABASE_URL) {
 app.register(cookie)
 app.register(authRoutes)
 app.register(usersRoutes)
+app.register(branchsRoutes)
 
 async function start() {
     await app.listen({ host: '0.0.0.0', port: process.env.SERVER_PORT });
