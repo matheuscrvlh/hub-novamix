@@ -1,19 +1,34 @@
 import { useState, type ReactNode } from 'react'
-import { decodeToken, type TokenBranch, type TokenPermission } from '../lib/jwt.ts'
+import { decodeToken, isTokenExpired, type TokenBranch, type TokenPermission } from '../lib/jwt.ts'
 import { AuthContext } from './auth-context.ts'
 
 function decodePayload(token: string) {
     const payload = decodeToken(token)
 
+    if (!payload || isTokenExpired(payload)) {
+        return null
+    }
+
     return {
-        role: payload?.role ?? null,
-        permissions: payload?.permissions ?? [],
-        branchs: payload?.branchs ?? []
+        role: payload.role ?? null,
+        permissions: payload.permissions ?? [],
+        branchs: payload.branchs ?? []
     }
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+function getInitialToken() {
     const storedToken = localStorage.getItem('token')
+
+    if (!storedToken || !decodePayload(storedToken)) {
+        localStorage.removeItem('token')
+        return null
+    }
+
+    return storedToken
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+    const storedToken = getInitialToken()
     const initialPayload = storedToken ? decodePayload(storedToken) : null
 
     const [token, setToken] = useState<string | null>(storedToken)
@@ -23,6 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     function login(token: string) {
         const decoded = decodePayload(token)
+
+        if (!decoded) {
+            return
+        }
 
         localStorage.setItem('token', token)
         setToken(token)

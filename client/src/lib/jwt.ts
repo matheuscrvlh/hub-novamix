@@ -13,6 +13,7 @@ export type TokenPayload = {
     role: string
     permissions: TokenPermission[]
     branchs: TokenBranch[]
+    exp: number
 }
 
 export function decodeToken(token: string): TokenPayload | null {
@@ -30,4 +31,8 @@ export function decodeToken(token: string): TokenPayload | null {
     } catch {
         return null
     }
+}
+
+export function isTokenExpired(payload: TokenPayload) {
+    return payload.exp * 1000 < Date.now()
 }
