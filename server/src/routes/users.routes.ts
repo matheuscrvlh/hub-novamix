@@ -17,10 +17,56 @@ type UserBody = {
 async function getUsers(res:FastifyReply) {
     try {
         const search = await db.query(`
-            SELECT id, name, login, role, status FROM users
+            SELECT 
+                u.id, 
+                u.name, 
+                u.login, 
+                u.role, 
+                u.status,
+                up.access,
+                m.slug AS module,
+                b.id AS branch_id,
+                b.name AS branch_name
+            FROM users AS u
+            LEFT JOIN user_permissions AS up
+                ON u.id = up.user_id
+            LEFT JOIN modules AS m
+                ON up.module_id = m.id
+            LEFT JOIN user_branchs AS ub
+                ON u.id = ub.user_id
+            LEFT JOIN branchs AS b
+                ON ub.branchs_id = b.id
         `);
 
-        return search.rows
+        const users = {};
+
+        for (const row of search.rows) {
+            if(!users[row.id]) {
+                users[row.id] = {
+                    id: row.id,
+                    name: row.name,
+                    login: row.login,
+                    role: row.role,
+                    status: row.status,
+                    permissions: [],
+                    branchs: []
+                }
+            };
+
+            users[row.id].permissions.push({
+                module: row.module,
+                access: row.access,
+            });
+
+            users[row.id].branchs.push({
+                id: row.branch_id,
+                name: row.branch_name
+            })
+        }
+
+        const result = Object.values(users);
+        return result
+
     } catch(error) {
         console.error(error);
         throw new Error('Erro ao buscar usuários.')

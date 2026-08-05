@@ -6,11 +6,13 @@ import { db } from './database/database.ts'
 import { authRoutes } from "./routes/auth.routes.ts";
 import { usersRoutes } from "./routes/users.routes.ts";
 import { branchsRoutes } from "./routes/branchs.routes.ts";
+import { modulesRoutes } from "./routes/modules.routes.ts";
 
 const app = Fastify();
 
 await app.register(cors, {
-    origin: '*'
+    origin: '*',
+     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 })
 
 if(!process.env.DATABASE_URL) {
@@ -23,6 +25,7 @@ app.register(cookie)
 app.register(authRoutes)
 app.register(usersRoutes)
 app.register(branchsRoutes)
+app.register(modulesRoutes)
 
 async function start() {
     await app.listen({ host: '0.0.0.0', port: process.env.SERVER_PORT });
