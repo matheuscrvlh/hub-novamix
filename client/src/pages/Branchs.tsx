@@ -1,6 +1,6 @@
 import { useEffect, useState, type SubmitEvent } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
-import { createUser, deleteUser, getUsers, updateUser, type User, type UserPayload } from '../api/users.ts'
+import { createBranch, deleteBranch, getBranchs, updateBranch, type Branch, type BranchPayload } from '../api/branchs.ts'
 import Button from '../components/Button.tsx'
 import Input from '../components/Input.tsx'
 import Alert from '../components/Alert.tsx'
@@ -8,18 +8,15 @@ import Modal from '../components/Modal.tsx'
 
 type FormState = {
     name: string
-    login: string
-    password: string
-    role: UserPayload['role']
     status: boolean
 }
 
-const emptyForm: FormState = { name: '', login: '', password: '', role: 'user', status: true }
+const emptyForm: FormState = { name: '', status: true }
 
-export default function Users() {
+export default function Branchs() {
     const { token } = useAuth()
 
-    const [users, setUsers] = useState<User[]>([])
+    const [branchs, setBranchs] = useState<Branch[]>([])
     const [loading, setLoading] = useState(true)
     const [erro, setErro] = useState('')
 
@@ -29,22 +26,22 @@ export default function Users() {
     const [salvando, setSalvando] = useState(false)
     const [formErro, setFormErro] = useState('')
 
-    async function loadUsers() {
+    async function loadBranchs() {
         setLoading(true)
         setErro('')
 
         try {
-            const result = await getUsers(token)
-            setUsers(result)
+            const result = await getBranchs(token)
+            setBranchs(result)
         } catch (error) {
-            setErro(error instanceof Error ? error.message : 'Erro ao buscar usuários.')
+            setErro(error instanceof Error ? error.message : 'Erro ao buscar filiais.')
         } finally {
             setLoading(false)
         }
     }
 
     useEffect(() => {
-        loadUsers()
+        loadBranchs()
     }, [])
 
     function openCreateModal() {
@@ -54,9 +51,9 @@ export default function Users() {
         setModalOpen(true)
     }
 
-    function openEditModal(user: User) {
-        setEditingId(user.id)
-        setForm({ name: user.name, login: user.login, password: '', role: user.role, status: user.status })
+    function openEditModal(branch: Branch) {
+        setEditingId(branch.id)
+        setForm({ name: branch.name, status: branch.status })
         setFormErro('')
         setModalOpen(true)
     }
@@ -70,40 +67,33 @@ export default function Users() {
         setSalvando(true)
         setFormErro('')
 
-        const payload: UserPayload = {
-            name: form.name,
-            login: form.login,
-            role: form.role,
-            status: form.status,
-            ...(form.password ? { password: form.password } : {})
-        }
-
         try {
             if (editingId) {
-                await updateUser(token, editingId, payload)
+                const payload: BranchPayload = { name: form.name, status: form.status }
+                await updateBranch(token, editingId, payload)
             } else {
-                await createUser(token, payload)
+                await createBranch(token, { name: form.name })
             }
 
             setModalOpen(false)
-            await loadUsers()
+            await loadBranchs()
         } catch (error) {
-            setFormErro(error instanceof Error ? error.message : 'Erro ao salvar usuário.')
+            setFormErro(error instanceof Error ? error.message : 'Erro ao salvar filial.')
         } finally {
             setSalvando(false)
         }
     }
 
-    async function handleDelete(user: User) {
-        if (!window.confirm(`Excluir o usuário ${user.name}?`)) {
+    async function handleDelete(branch: Branch) {
+        if (!window.confirm(`Excluir a filial ${branch.name}?`)) {
             return
         }
 
         try {
-            await deleteUser(token, user.id)
-            await loadUsers()
+            await deleteBranch(token, branch.id, branch.name)
+            await loadBranchs()
         } catch (error) {
-            setErro(error instanceof Error ? error.message : 'Erro ao excluir usuário.')
+            setErro(error instanceof Error ? error.message : 'Erro ao excluir filial.')
         }
     }
 
@@ -112,14 +102,14 @@ export default function Users() {
             <div className='flex items-center justify-between mb-6 gap-4'>
                 <div>
                     <h1 className='text-2xl font-semibold text-gray-text dark:text-dark-text mb-1'>
-                        Usuários
+                        Filiais
                     </h1>
                     <p className='text-sm text-gray-dark dark:text-dark-text-muted'>
-                        Gerencie os usuários com acesso ao hub.
+                        Gerencie as filiais cadastradas no hub.
                     </p>
                 </div>
 
-                <Button onClick={openCreateModal}>Novo usuário</Button>
+                <Button onClick={openCreateModal}>Nova filial</Button>
             </div>
 
             {erro && (
@@ -133,8 +123,6 @@ export default function Users() {
                     <thead>
                         <tr className='border-b border-gray-base/30 dark:border-dark-border text-gray-dark dark:text-dark-text-muted'>
                             <th className='px-4 py-3 font-medium'>Nome</th>
-                            <th className='px-4 py-3 font-medium'>Login</th>
-                            <th className='px-4 py-3 font-medium'>Perfil</th>
                             <th className='px-4 py-3 font-medium'>Status</th>
                             <th className='px-4 py-3 font-medium text-right'>Ações</th>
                         </tr>
@@ -142,42 +130,40 @@ export default function Users() {
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan={5} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
+                                <td colSpan={3} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
                                     Carregando...
                                 </td>
                             </tr>
-                        ) : users.length === 0 ? (
+                        ) : branchs.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
-                                    Nenhum usuário cadastrado.
+                                <td colSpan={3} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
+                                    Nenhuma filial cadastrada.
                                 </td>
                             </tr>
                         ) : (
-                            users.map((user) => (
+                            branchs.map((branch) => (
                                 <tr
-                                    key={user.id}
+                                    key={branch.id}
                                     className='border-b last:border-0 border-gray-base/20 dark:border-dark-border text-gray-text dark:text-dark-text'
                                 >
-                                    <td className='px-4 py-3'>{user.name}</td>
-                                    <td className='px-4 py-3'>{user.login}</td>
-                                    <td className='px-4 py-3 capitalize'>{user.role}</td>
+                                    <td className='px-4 py-3'>{branch.name}</td>
                                     <td className='px-4 py-3'>
                                         <span
                                             className={`rounded-full text-xs font-medium px-2 py-1 ${
-                                                user.status
+                                                branch.status
                                                     ? 'bg-green-base/10 text-green-base'
                                                     : 'bg-red-base/10 text-red-base'
                                             }`}
                                         >
-                                            {user.status ? 'Ativo' : 'Inativo'}
+                                            {branch.status ? 'Ativa' : 'Inativa'}
                                         </span>
                                     </td>
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
-                                            <Button variant='ghost' onClick={() => openEditModal(user)}>
+                                            <Button variant='ghost' onClick={() => openEditModal(branch)}>
                                                 Editar
                                             </Button>
-                                            <Button variant='danger' onClick={() => handleDelete(user)}>
+                                            <Button variant='danger' onClick={() => handleDelete(branch)}>
                                                 Excluir
                                             </Button>
                                         </div>
@@ -189,7 +175,7 @@ export default function Users() {
                 </table>
             </div>
 
-            <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Editar usuário' : 'Novo usuário'}>
+            <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Editar filial' : 'Nova filial'}>
                 <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
                     <Input
                         placeholder='Nome'
@@ -198,39 +184,17 @@ export default function Users() {
                         required
                         alwaysLight
                     />
-                    <Input
-                        placeholder='Login'
-                        value={form.login}
-                        onChange={(e) => setForm({ ...form, login: e.target.value })}
-                        required
-                        alwaysLight
-                    />
-                    <Input
-                        type='password'
-                        placeholder={editingId ? 'Nova senha (deixe em branco para manter)' : 'Senha'}
-                        value={form.password}
-                        onChange={(e) => setForm({ ...form, password: e.target.value })}
-                        required={!editingId}
-                        alwaysLight
-                    />
 
-                    <select
-                        value={form.role}
-                        onChange={(e) => setForm({ ...form, role: e.target.value as UserPayload['role'] })}
-                        className='w-full rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base'
-                    >
-                        <option value='user'>Usuário</option>
-                        <option value='admin'>Administrador</option>
-                    </select>
-
-                    <label className='flex items-center gap-2 text-sm text-gray-text'>
-                        <input
-                            type='checkbox'
-                            checked={form.status}
-                            onChange={(e) => setForm({ ...form, status: e.target.checked })}
-                        />
-                        Usuário ativo
-                    </label>
+                    {editingId && (
+                        <label className='flex items-center gap-2 text-sm text-gray-text'>
+                            <input
+                                type='checkbox'
+                                checked={form.status}
+                                onChange={(e) => setForm({ ...form, status: e.target.checked })}
+                            />
+                            Filial ativa
+                        </label>
+                    )}
 
                     {formErro && <Alert>{formErro}</Alert>}
 

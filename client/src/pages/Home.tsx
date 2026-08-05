@@ -56,19 +56,19 @@ export default function Home() {
                     <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
                         {isAdmin && (
                             <Link
-                                to='/users'
+                                to='/admin'
                                 className='group flex flex-col gap-3 rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border p-5 shadow-sm transition hover:shadow-md hover:-translate-y-0.5'
                             >
                                 <div className='flex items-center justify-between'>
                                     <span className='text-base font-semibold text-gray-text dark:text-dark-text'>
-                                        Usuários
+                                        Administração
                                     </span>
                                     <span className='rounded-full bg-blue-base/10 text-blue-base text-xs font-medium px-2 py-1'>
                                         admin
                                     </span>
                                 </div>
                                 <span className='text-sm text-gray-dark dark:text-dark-text-muted group-hover:text-orange-base transition'>
-                                    Gerenciar usuários →
+                                    Usuários, filiais e módulos →
                                 </span>
                             </Link>
                         )}

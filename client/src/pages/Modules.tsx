@@ -1,6 +1,6 @@
 import { useEffect, useState, type SubmitEvent } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
-import { createUser, deleteUser, getUsers, updateUser, type User, type UserPayload } from '../api/users.ts'
+import { createModule, deleteModule, getModules, updateModule, type Module, type ModulePayload } from '../api/modules.ts'
 import Button from '../components/Button.tsx'
 import Input from '../components/Input.tsx'
 import Alert from '../components/Alert.tsx'
@@ -8,18 +8,19 @@ import Modal from '../components/Modal.tsx'
 
 type FormState = {
     name: string
-    login: string
-    password: string
-    role: UserPayload['role']
+    slug: string
+    public_link: string
+    private_link: string
+    image: string
     status: boolean
 }
 
-const emptyForm: FormState = { name: '', login: '', password: '', role: 'user', status: true }
+const emptyForm: FormState = { name: '', slug: '', public_link: '', private_link: '', image: '', status: true }
 
-export default function Users() {
+export default function Modules() {
     const { token } = useAuth()
 
-    const [users, setUsers] = useState<User[]>([])
+    const [modules, setModules] = useState<Module[]>([])
     const [loading, setLoading] = useState(true)
     const [erro, setErro] = useState('')
 
@@ -29,22 +30,22 @@ export default function Users() {
     const [salvando, setSalvando] = useState(false)
     const [formErro, setFormErro] = useState('')
 
-    async function loadUsers() {
+    async function loadModules() {
         setLoading(true)
         setErro('')
 
         try {
-            const result = await getUsers(token)
-            setUsers(result)
+            const result = await getModules(token)
+            setModules(result)
         } catch (error) {
-            setErro(error instanceof Error ? error.message : 'Erro ao buscar usuários.')
+            setErro(error instanceof Error ? error.message : 'Erro ao buscar módulos.')
         } finally {
             setLoading(false)
         }
     }
 
     useEffect(() => {
-        loadUsers()
+        loadModules()
     }, [])
 
     function openCreateModal() {
@@ -54,9 +55,16 @@ export default function Users() {
         setModalOpen(true)
     }
 
-    function openEditModal(user: User) {
-        setEditingId(user.id)
-        setForm({ name: user.name, login: user.login, password: '', role: user.role, status: user.status })
+    function openEditModal(module: Module) {
+        setEditingId(module.id)
+        setForm({
+            name: module.name,
+            slug: module.slug,
+            public_link: module.public_link,
+            private_link: module.private_link,
+            image: module.image,
+            status: module.status
+        })
         setFormErro('')
         setModalOpen(true)
     }
@@ -70,40 +78,40 @@ export default function Users() {
         setSalvando(true)
         setFormErro('')
 
-        const payload: UserPayload = {
+        const payload: ModulePayload = {
             name: form.name,
-            login: form.login,
-            role: form.role,
-            status: form.status,
-            ...(form.password ? { password: form.password } : {})
+            slug: form.slug,
+            public_link: form.public_link,
+            private_link: form.private_link,
+            image: form.image
         }
 
         try {
             if (editingId) {
-                await updateUser(token, editingId, payload)
+                await updateModule(token, editingId, { ...payload, status: form.status })
             } else {
-                await createUser(token, payload)
+                await createModule(token, payload)
             }
 
             setModalOpen(false)
-            await loadUsers()
+            await loadModules()
         } catch (error) {
-            setFormErro(error instanceof Error ? error.message : 'Erro ao salvar usuário.')
+            setFormErro(error instanceof Error ? error.message : 'Erro ao salvar módulo.')
         } finally {
             setSalvando(false)
         }
     }
 
-    async function handleDelete(user: User) {
-        if (!window.confirm(`Excluir o usuário ${user.name}?`)) {
+    async function handleDelete(module: Module) {
+        if (!window.confirm(`Excluir o módulo ${module.name}?`)) {
             return
         }
 
         try {
-            await deleteUser(token, user.id)
-            await loadUsers()
+            await deleteModule(token, module.id, module.name)
+            await loadModules()
         } catch (error) {
-            setErro(error instanceof Error ? error.message : 'Erro ao excluir usuário.')
+            setErro(error instanceof Error ? error.message : 'Erro ao excluir módulo.')
         }
     }
 
@@ -112,14 +120,14 @@ export default function Users() {
             <div className='flex items-center justify-between mb-6 gap-4'>
                 <div>
                     <h1 className='text-2xl font-semibold text-gray-text dark:text-dark-text mb-1'>
-                        Usuários
+                        Módulos
                     </h1>
                     <p className='text-sm text-gray-dark dark:text-dark-text-muted'>
-                        Gerencie os usuários com acesso ao hub.
+                        Gerencie os módulos disponíveis no hub.
                     </p>
                 </div>
 
-                <Button onClick={openCreateModal}>Novo usuário</Button>
+                <Button onClick={openCreateModal}>Novo módulo</Button>
             </div>
 
             {erro && (
@@ -133,8 +141,9 @@ export default function Users() {
                     <thead>
                         <tr className='border-b border-gray-base/30 dark:border-dark-border text-gray-dark dark:text-dark-text-muted'>
                             <th className='px-4 py-3 font-medium'>Nome</th>
-                            <th className='px-4 py-3 font-medium'>Login</th>
-                            <th className='px-4 py-3 font-medium'>Perfil</th>
+                            <th className='px-4 py-3 font-medium'>Slug</th>
+                            <th className='px-4 py-3 font-medium'>Link público</th>
+                            <th className='px-4 py-3 font-medium'>Link privado</th>
                             <th className='px-4 py-3 font-medium'>Status</th>
                             <th className='px-4 py-3 font-medium text-right'>Ações</th>
                         </tr>
@@ -142,42 +151,43 @@ export default function Users() {
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan={5} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
+                                <td colSpan={6} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
                                     Carregando...
                                 </td>
                             </tr>
-                        ) : users.length === 0 ? (
+                        ) : modules.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
-                                    Nenhum usuário cadastrado.
+                                <td colSpan={6} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
+                                    Nenhum módulo cadastrado.
                                 </td>
                             </tr>
                         ) : (
-                            users.map((user) => (
+                            modules.map((module) => (
                                 <tr
-                                    key={user.id}
+                                    key={module.id}
                                     className='border-b last:border-0 border-gray-base/20 dark:border-dark-border text-gray-text dark:text-dark-text'
                                 >
-                                    <td className='px-4 py-3'>{user.name}</td>
-                                    <td className='px-4 py-3'>{user.login}</td>
-                                    <td className='px-4 py-3 capitalize'>{user.role}</td>
+                                    <td className='px-4 py-3'>{module.name}</td>
+                                    <td className='px-4 py-3'>{module.slug}</td>
+                                    <td className='px-4 py-3 truncate max-w-40'>{module.public_link}</td>
+                                    <td className='px-4 py-3 truncate max-w-40'>{module.private_link}</td>
                                     <td className='px-4 py-3'>
                                         <span
                                             className={`rounded-full text-xs font-medium px-2 py-1 ${
-                                                user.status
+                                                module.status
                                                     ? 'bg-green-base/10 text-green-base'
                                                     : 'bg-red-base/10 text-red-base'
                                             }`}
                                         >
-                                            {user.status ? 'Ativo' : 'Inativo'}
+                                            {module.status ? 'Ativo' : 'Inativo'}
                                         </span>
                                     </td>
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
-                                            <Button variant='ghost' onClick={() => openEditModal(user)}>
+                                            <Button variant='ghost' onClick={() => openEditModal(module)}>
                                                 Editar
                                             </Button>
-                                            <Button variant='danger' onClick={() => handleDelete(user)}>
+                                            <Button variant='danger' onClick={() => handleDelete(module)}>
                                                 Excluir
                                             </Button>
                                         </div>
@@ -189,7 +199,7 @@ export default function Users() {
                 </table>
             </div>
 
-            <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Editar usuário' : 'Novo usuário'}>
+            <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Editar módulo' : 'Novo módulo'}>
                 <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
                     <Input
                         placeholder='Nome'
@@ -199,38 +209,44 @@ export default function Users() {
                         alwaysLight
                     />
                     <Input
-                        placeholder='Login'
-                        value={form.login}
-                        onChange={(e) => setForm({ ...form, login: e.target.value })}
+                        placeholder='Slug'
+                        value={form.slug}
+                        onChange={(e) => setForm({ ...form, slug: e.target.value })}
                         required
                         alwaysLight
                     />
                     <Input
-                        type='password'
-                        placeholder={editingId ? 'Nova senha (deixe em branco para manter)' : 'Senha'}
-                        value={form.password}
-                        onChange={(e) => setForm({ ...form, password: e.target.value })}
-                        required={!editingId}
+                        placeholder='Link público'
+                        value={form.public_link}
+                        onChange={(e) => setForm({ ...form, public_link: e.target.value })}
+                        required
+                        alwaysLight
+                    />
+                    <Input
+                        placeholder='Link privado'
+                        value={form.private_link}
+                        onChange={(e) => setForm({ ...form, private_link: e.target.value })}
+                        required
+                        alwaysLight
+                    />
+                    <Input
+                        placeholder='Imagem (URL)'
+                        value={form.image}
+                        onChange={(e) => setForm({ ...form, image: e.target.value })}
+                        required
                         alwaysLight
                     />
 
-                    <select
-                        value={form.role}
-                        onChange={(e) => setForm({ ...form, role: e.target.value as UserPayload['role'] })}
-                        className='w-full rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base'
-                    >
-                        <option value='user'>Usuário</option>
-                        <option value='admin'>Administrador</option>
-                    </select>
-
-                    <label className='flex items-center gap-2 text-sm text-gray-text'>
-                        <input
-                            type='checkbox'
-                            checked={form.status}
-                            onChange={(e) => setForm({ ...form, status: e.target.checked })}
-                        />
-                        Usuário ativo
-                    </label>
+                    {editingId && (
+                        <label className='flex items-center gap-2 text-sm text-gray-text'>
+                            <input
+                                type='checkbox'
+                                checked={form.status}
+                                onChange={(e) => setForm({ ...form, status: e.target.checked })}
+                            />
+                            Módulo ativo
+                        </label>
+                    )}
 
                     {formErro && <Alert>{formErro}</Alert>}
 
