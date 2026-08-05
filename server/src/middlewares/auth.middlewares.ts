@@ -15,7 +15,11 @@ export async function authenticate(req:FastifyRequest, res:FastifyReply) {
         return res.code(401).send({ error: 'Autorização não encontrada.' });
     }
 
-    req.user = await verifyToken(token)
+    try {
+        req.user = await verifyToken(token)
+    } catch (error) {
+        return res.code(401).send({ error: 'Sessão inválida ou expirada.' });
+    }
 }
 
 export async function checkAdmin(req:FastifyRequest, res:FastifyReply) {

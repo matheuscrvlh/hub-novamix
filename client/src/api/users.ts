@@ -2,6 +2,17 @@ import client from './client.ts'
 
 export type UserRole = 'user' | 'admin'
 
+export type UserPermission = {
+    module_id: number
+    module: string
+    access: string
+}
+
+export type UserBranch = {
+    id: number
+    name: string
+}
+
 export type User = {
     id: number
     name: string
@@ -9,6 +20,8 @@ export type User = {
     role: UserRole
     status: boolean
     created_at: string
+    permissions: UserPermission[]
+    branchs: UserBranch[]
 }
 
 export type UserPayload = {
@@ -17,6 +30,8 @@ export type UserPayload = {
     password?: string
     role: UserRole
     status: boolean
+    permissions?: { module_id: number; access: string }[]
+    branchs_id?: number[]
 }
 
 export async function getUsers(token: string | null): Promise<User[]> {
@@ -24,13 +39,13 @@ export async function getUsers(token: string | null): Promise<User[]> {
 }
 
 export async function createUser(token: string | null, data: UserPayload) {
-    return client({ url: '/user', token, method: 'POST', data })
+    return client({ url: '/users', token, method: 'POST', data })
 }
 
 export async function updateUser(token: string | null, id: number, data: UserPayload) {
-    return client({ url: '/user', token, method: 'PUT', data: { id, ...data } })
+    return client({ url: '/users', token, method: 'PUT', data: { id, ...data } })
 }
 
 export async function deleteUser(token: string | null, id: number) {
-    return client({ url: '/user', token, method: 'DELETE', data: { id } })
+    return client({ url: '/users', token, method: 'DELETE', data: { id } })
 }
