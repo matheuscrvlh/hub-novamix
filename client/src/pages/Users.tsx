@@ -16,8 +16,6 @@ type FormState = {
     password: string
     role: UserPayload['role']
     status: boolean
-    permissions: FormPermission[]
-    branchsIds: number[]
 }
 
 const emptyForm: FormState = {
@@ -25,10 +23,15 @@ const emptyForm: FormState = {
     login: '',
     password: '',
     role: 'user',
-    status: true,
-    permissions: [],
-    branchsIds: []
+    status: true
 }
+
+type PermissionsFormState = {
+    permissions: FormPermission[]
+    branchsIds: number[]
+}
+
+const emptyPermissionsForm: PermissionsFormState = { permissions: [], branchsIds: [] }
 
 export default function Users() {
     const { token } = useAuth()
@@ -44,6 +47,12 @@ export default function Users() {
     const [form, setForm] = useState<FormState>(emptyForm)
     const [salvando, setSalvando] = useState(false)
     const [formErro, setFormErro] = useState('')
+
+    const [permissionsModalOpen, setPermissionsModalOpen] = useState(false)
+    const [permissionsTarget, setPermissionsTarget] = useState<User | null>(null)
+    const [permissionsForm, setPermissionsForm] = useState<PermissionsFormState>(emptyPermissionsForm)
+    const [permissionsSalvando, setPermissionsSalvando] = useState(false)
+    const [permissionsErro, setPermissionsErro] = useState('')
 
     async function loadUsers() {
         setLoading(true)
@@ -83,16 +92,33 @@ export default function Users() {
             login: user.login,
             password: '',
             role: user.role,
-            status: user.status,
-            permissions: user.permissions.map((p) => ({ module_id: p.module_id, access: p.access })),
-            branchsIds: user.branchs.map((b) => b.id)
+            status: user.status
         })
         setFormErro('')
         setModalOpen(true)
     }
 
+    function closeModal() {
+        setModalOpen(false)
+    }
+
+    function openPermissionsModal(user: User) {
+        setPermissionsTarget(user)
+        setPermissionsForm({
+            permissions: user.permissions.map((p) => ({ module_id: p.module_id, access: p.access })),
+            branchsIds: user.branchs.map((b) => b.id)
+        })
+        setPermissionsErro('')
+        setPermissionsModalOpen(true)
+    }
+
+    function closePermissionsModal() {
+        setPermissionsModalOpen(false)
+        setPermissionsTarget(null)
+    }
+
     function toggleModulePermission(moduleId: number, checked: boolean) {
-        setForm((prev) => ({
+        setPermissionsForm((prev) => ({
             ...prev,
             permissions: checked
                 ? [...prev.permissions, { module_id: moduleId, access: 'read' }]
@@ -101,23 +127,19 @@ export default function Users() {
     }
 
     function changeModuleAccess(moduleId: number, access: string) {
-        setForm((prev) => ({
+        setPermissionsForm((prev) => ({
             ...prev,
             permissions: prev.permissions.map((p) => (p.module_id === moduleId ? { ...p, access } : p))
         }))
     }
 
     function toggleBranch(branchId: number, checked: boolean) {
-        setForm((prev) => ({
+        setPermissionsForm((prev) => ({
             ...prev,
             branchsIds: checked
                 ? [...prev.branchsIds, branchId]
                 : prev.branchsIds.filter((id) => id !== branchId)
         }))
-    }
-
-    function closeModal() {
-        setModalOpen(false)
     }
 
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
@@ -130,8 +152,6 @@ export default function Users() {
             login: form.login,
             role: form.role,
             status: form.status,
-            permissions: form.permissions,
-            branchs_id: form.branchsIds,
             ...(form.password ? { password: form.password } : {})
         }
 
@@ -148,6 +168,32 @@ export default function Users() {
             setFormErro(error instanceof Error ? error.message : 'Erro ao salvar usuário.')
         } finally {
             setSalvando(false)
+        }
+    }
+
+    async function handleSavePermissions(event: SubmitEvent<HTMLFormElement>) {
+        event.preventDefault()
+        if (!permissionsTarget) return
+
+        setPermissionsSalvando(true)
+        setPermissionsErro('')
+
+        try {
+            await updateUser(token, permissionsTarget.id, {
+                name: permissionsTarget.name,
+                login: permissionsTarget.login,
+                role: permissionsTarget.role,
+                status: permissionsTarget.status,
+                permissions: permissionsForm.permissions,
+                branchs_id: permissionsForm.branchsIds
+            })
+
+            closePermissionsModal()
+            await loadUsers()
+        } catch (error) {
+            setPermissionsErro(error instanceof Error ? error.message : 'Erro ao salvar permissões.')
+        } finally {
+            setPermissionsSalvando(false)
         }
     }
 
@@ -231,6 +277,14 @@ export default function Users() {
                                     </td>
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
+                                            <Button variant='ghost' onClick={() => openPermissionsModal(user)}>
+                                                Permissões
+                                                {user.permissions.length + user.branchs.length > 0 && (
+                                                    <span className='ml-1 text-orange-base'>
+                                                        ({user.permissions.length + user.branchs.length})
+                                                    </span>
+                                                )}
+                                            </Button>
                                             <Button variant='ghost' onClick={() => openEditModal(user)}>
                                                 Editar
                                             </Button>
@@ -254,6 +308,7 @@ export default function Users() {
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                         required
                         alwaysLight
+                        autoComplete='off'
                     />
                     <Input
                         placeholder='Login'
@@ -261,6 +316,7 @@ export default function Users() {
                         onChange={(e) => setForm({ ...form, login: e.target.value })}
                         required
                         alwaysLight
+                        autoComplete='off'
                     />
                     <Input
                         type='password'
@@ -269,6 +325,7 @@ export default function Users() {
                         onChange={(e) => setForm({ ...form, password: e.target.value })}
                         required={!editingId}
                         alwaysLight
+                        autoComplete='new-password'
                     />
 
                     <select
@@ -289,11 +346,33 @@ export default function Users() {
                         Usuário ativo
                     </label>
 
+                    {formErro && <Alert>{formErro}</Alert>}
+
+                    <div className='flex items-center justify-end gap-2 mt-2'>
+                        <Button type='button' variant='ghost' onClick={closeModal}>
+                            Cancelar
+                        </Button>
+                        <Button type='submit' disabled={salvando}>
+                            {salvando ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal
+                open={permissionsModalOpen}
+                onClose={closePermissionsModal}
+                title={permissionsTarget ? `Permissões de ${permissionsTarget.name}` : 'Permissões'}
+            >
+                <form onSubmit={handleSavePermissions} className='flex flex-col gap-4'>
                     <div>
                         <p className='text-sm font-medium text-gray-text mb-2'>Módulos</p>
-                        <div className='flex flex-col gap-2 max-h-40 overflow-y-auto'>
+                        <div className='flex flex-col gap-2 max-h-52 overflow-y-auto'>
+                            {modules.length === 0 && (
+                                <p className='text-sm text-gray-dark'>Nenhum módulo cadastrado.</p>
+                            )}
                             {modules.map((module) => {
-                                const permission = form.permissions.find((p) => p.module_id === module.id)
+                                const permission = permissionsForm.permissions.find((p) => p.module_id === module.id)
 
                                 return (
                                     <div key={module.id} className='flex items-center gap-2'>
@@ -322,12 +401,15 @@ export default function Users() {
 
                     <div>
                         <p className='text-sm font-medium text-gray-text mb-2'>Filiais</p>
-                        <div className='flex flex-col gap-2 max-h-40 overflow-y-auto'>
+                        <div className='flex flex-col gap-2 max-h-52 overflow-y-auto'>
+                            {branchs.length === 0 && (
+                                <p className='text-sm text-gray-dark'>Nenhuma filial cadastrada.</p>
+                            )}
                             {branchs.map((branch) => (
                                 <label key={branch.id} className='flex items-center gap-2 text-sm text-gray-text'>
                                     <input
                                         type='checkbox'
-                                        checked={form.branchsIds.includes(branch.id)}
+                                        checked={permissionsForm.branchsIds.includes(branch.id)}
                                         onChange={(e) => toggleBranch(branch.id, e.target.checked)}
                                     />
                                     {branch.name}
@@ -336,14 +418,14 @@ export default function Users() {
                         </div>
                     </div>
 
-                    {formErro && <Alert>{formErro}</Alert>}
+                    {permissionsErro && <Alert>{permissionsErro}</Alert>}
 
                     <div className='flex items-center justify-end gap-2 mt-2'>
-                        <Button type='button' variant='ghost' onClick={closeModal}>
+                        <Button type='button' variant='ghost' onClick={closePermissionsModal}>
                             Cancelar
                         </Button>
-                        <Button type='submit' disabled={salvando}>
-                            {salvando ? 'Salvando...' : 'Salvar'}
+                        <Button type='submit' disabled={permissionsSalvando}>
+                            {permissionsSalvando ? 'Salvando...' : 'Salvar'}
                         </Button>
                     </div>
                 </form>
