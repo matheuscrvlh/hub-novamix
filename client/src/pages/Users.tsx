@@ -27,11 +27,17 @@ const emptyForm: FormState = {
 }
 
 type PermissionsFormState = {
+    role: UserPayload['role']
     permissions: FormPermission[]
+}
+
+const emptyPermissionsForm: PermissionsFormState = { role: 'user', permissions: [] }
+
+type BranchsFormState = {
     branchsIds: number[]
 }
 
-const emptyPermissionsForm: PermissionsFormState = { permissions: [], branchsIds: [] }
+const emptyBranchsForm: BranchsFormState = { branchsIds: [] }
 
 export default function Users() {
     const { token } = useAuth()
@@ -53,6 +59,12 @@ export default function Users() {
     const [permissionsForm, setPermissionsForm] = useState<PermissionsFormState>(emptyPermissionsForm)
     const [permissionsSalvando, setPermissionsSalvando] = useState(false)
     const [permissionsErro, setPermissionsErro] = useState('')
+
+    const [branchsModalOpen, setBranchsModalOpen] = useState(false)
+    const [branchsTarget, setBranchsTarget] = useState<User | null>(null)
+    const [branchsForm, setBranchsForm] = useState<BranchsFormState>(emptyBranchsForm)
+    const [branchsSalvando, setBranchsSalvando] = useState(false)
+    const [branchsErro, setBranchsErro] = useState('')
 
     async function loadUsers() {
         setLoading(true)
@@ -105,8 +117,8 @@ export default function Users() {
     function openPermissionsModal(user: User) {
         setPermissionsTarget(user)
         setPermissionsForm({
-            permissions: user.permissions.map((p) => ({ module_id: p.module_id, access: p.access })),
-            branchsIds: user.branchs.map((b) => b.id)
+            role: user.role,
+            permissions: user.permissions.map((p) => ({ module_id: p.module_id, access: p.access }))
         })
         setPermissionsErro('')
         setPermissionsModalOpen(true)
@@ -133,8 +145,20 @@ export default function Users() {
         }))
     }
 
+    function openBranchsModal(user: User) {
+        setBranchsTarget(user)
+        setBranchsForm({ branchsIds: user.branchs.map((b) => b.id) })
+        setBranchsErro('')
+        setBranchsModalOpen(true)
+    }
+
+    function closeBranchsModal() {
+        setBranchsModalOpen(false)
+        setBranchsTarget(null)
+    }
+
     function toggleBranch(branchId: number, checked: boolean) {
-        setPermissionsForm((prev) => ({
+        setBranchsForm((prev) => ({
             ...prev,
             branchsIds: checked
                 ? [...prev.branchsIds, branchId]
@@ -182,10 +206,9 @@ export default function Users() {
             await updateUser(token, permissionsTarget.id, {
                 name: permissionsTarget.name,
                 login: permissionsTarget.login,
-                role: permissionsTarget.role,
+                role: permissionsForm.role,
                 status: permissionsTarget.status,
-                permissions: permissionsForm.permissions,
-                branchs_id: permissionsForm.branchsIds
+                permissions: permissionsForm.permissions
             })
 
             closePermissionsModal()
@@ -194,6 +217,31 @@ export default function Users() {
             setPermissionsErro(error instanceof Error ? error.message : 'Erro ao salvar permissões.')
         } finally {
             setPermissionsSalvando(false)
+        }
+    }
+
+    async function handleSaveBranchs(event: SubmitEvent<HTMLFormElement>) {
+        event.preventDefault()
+        if (!branchsTarget) return
+
+        setBranchsSalvando(true)
+        setBranchsErro('')
+
+        try {
+            await updateUser(token, branchsTarget.id, {
+                name: branchsTarget.name,
+                login: branchsTarget.login,
+                role: branchsTarget.role,
+                status: branchsTarget.status,
+                branchs_id: branchsForm.branchsIds
+            })
+
+            closeBranchsModal()
+            await loadUsers()
+        } catch (error) {
+            setBranchsErro(error instanceof Error ? error.message : 'Erro ao salvar filiais.')
+        } finally {
+            setBranchsSalvando(false)
         }
     }
 
@@ -279,9 +327,17 @@ export default function Users() {
                                         <div className='flex items-center justify-end gap-2'>
                                             <Button variant='ghost' onClick={() => openPermissionsModal(user)}>
                                                 Permissões
-                                                {user.permissions.length + user.branchs.length > 0 && (
+                                                {user.permissions.length > 0 && (
                                                     <span className='ml-1 text-orange-base'>
-                                                        ({user.permissions.length + user.branchs.length})
+                                                        ({user.permissions.length})
+                                                    </span>
+                                                )}
+                                            </Button>
+                                            <Button variant='ghost' onClick={() => openBranchsModal(user)}>
+                                                Filiais
+                                                {user.branchs.length > 0 && (
+                                                    <span className='ml-1 text-orange-base'>
+                                                        ({user.branchs.length})
                                                     </span>
                                                 )}
                                             </Button>
@@ -328,15 +384,6 @@ export default function Users() {
                         autoComplete='new-password'
                     />
 
-                    <select
-                        value={form.role}
-                        onChange={(e) => setForm({ ...form, role: e.target.value as UserPayload['role'] })}
-                        className='w-full rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base'
-                    >
-                        <option value='user'>Usuário</option>
-                        <option value='admin'>Administrador</option>
-                    </select>
-
                     <label className='flex items-center gap-2 text-sm text-gray-text'>
                         <input
                             type='checkbox'
@@ -363,61 +410,56 @@ export default function Users() {
                 open={permissionsModalOpen}
                 onClose={closePermissionsModal}
                 title={permissionsTarget ? `Permissões de ${permissionsTarget.name}` : 'Permissões'}
-                maxWidthClassName='max-w-2xl'
             >
                 <form onSubmit={handleSavePermissions} className='flex flex-col gap-4'>
-                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
-                        <div>
-                            <p className='text-sm font-medium text-gray-text mb-2'>Módulos</p>
-                            <div className='flex flex-col gap-2 max-h-64 overflow-y-auto pr-1'>
-                                {modules.length === 0 && (
-                                    <p className='text-sm text-gray-dark'>Nenhum módulo cadastrado.</p>
-                                )}
-                                {modules.map((module) => {
-                                    const permission = permissionsForm.permissions.find((p) => p.module_id === module.id)
+                    <div className='rounded-lg border border-orange-base/40 bg-orange-base/5 p-3'>
+                        <p className='text-sm font-semibold text-gray-text mb-1'>Acesso ao Hub</p>
+                        <p className='text-xs text-gray-dark mb-2'>
+                            Administradores têm acesso total à área /admin do hub.
+                        </p>
+                        <select
+                            value={permissionsForm.role}
+                            onChange={(e) =>
+                                setPermissionsForm((prev) => ({ ...prev, role: e.target.value as UserPayload['role'] }))
+                            }
+                            className='w-full rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base'
+                        >
+                            <option value='user'>Usuário</option>
+                            <option value='admin'>Administrador</option>
+                        </select>
+                    </div>
 
-                                    return (
-                                        <div key={module.id} className='flex items-center gap-2'>
-                                            <label className='flex items-center gap-2 text-sm text-gray-text flex-1'>
-                                                <input
-                                                    type='checkbox'
-                                                    checked={!!permission}
-                                                    onChange={(e) => toggleModulePermission(module.id, e.target.checked)}
-                                                />
-                                                {module.name}
-                                            </label>
-                                            <select
-                                                value={permission?.access ?? 'read'}
-                                                disabled={!permission}
-                                                onChange={(e) => changeModuleAccess(module.id, e.target.value)}
-                                                className='rounded-md border border-gray-base bg-white px-2 py-1 text-xs text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base disabled:opacity-50'
-                                            >
-                                                <option value='read'>Leitura</option>
-                                                <option value='admin'>Admin</option>
-                                            </select>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        </div>
+                    <div>
+                        <p className='text-sm font-medium text-gray-text mb-2'>Módulos</p>
+                        <div className='flex flex-col gap-2 max-h-64 overflow-y-auto pr-1'>
+                            {modules.length === 0 && (
+                                <p className='text-sm text-gray-dark'>Nenhum módulo cadastrado.</p>
+                            )}
+                            {modules.map((module) => {
+                                const permission = permissionsForm.permissions.find((p) => p.module_id === module.id)
 
-                        <div>
-                            <p className='text-sm font-medium text-gray-text mb-2'>Filiais</p>
-                            <div className='flex flex-col gap-2 max-h-64 overflow-y-auto pr-1'>
-                                {branchs.length === 0 && (
-                                    <p className='text-sm text-gray-dark'>Nenhuma filial cadastrada.</p>
-                                )}
-                                {branchs.map((branch) => (
-                                    <label key={branch.id} className='flex items-center gap-2 text-sm text-gray-text'>
-                                        <input
-                                            type='checkbox'
-                                            checked={permissionsForm.branchsIds.includes(branch.id)}
-                                            onChange={(e) => toggleBranch(branch.id, e.target.checked)}
-                                        />
-                                        {branch.name}
-                                    </label>
-                                ))}
-                            </div>
+                                return (
+                                    <div key={module.id} className='flex items-center gap-2'>
+                                        <label className='flex items-center gap-2 text-sm text-gray-text flex-1'>
+                                            <input
+                                                type='checkbox'
+                                                checked={!!permission}
+                                                onChange={(e) => toggleModulePermission(module.id, e.target.checked)}
+                                            />
+                                            {module.name}
+                                        </label>
+                                        <select
+                                            value={permission?.access ?? 'read'}
+                                            disabled={!permission}
+                                            onChange={(e) => changeModuleAccess(module.id, e.target.value)}
+                                            className='rounded-md border border-gray-base bg-white px-2 py-1 text-xs text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base disabled:opacity-50'
+                                        >
+                                            <option value='read'>Leitura</option>
+                                            <option value='admin'>Admin</option>
+                                        </select>
+                                    </div>
+                                )
+                            })}
                         </div>
                     </div>
 
@@ -429,6 +471,44 @@ export default function Users() {
                         </Button>
                         <Button type='submit' disabled={permissionsSalvando}>
                             {permissionsSalvando ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal
+                open={branchsModalOpen}
+                onClose={closeBranchsModal}
+                title={branchsTarget ? `Filiais de ${branchsTarget.name}` : 'Filiais'}
+            >
+                <form onSubmit={handleSaveBranchs} className='flex flex-col gap-4'>
+                    <div>
+                        <p className='text-sm font-medium text-gray-text mb-2'>Filiais liberadas</p>
+                        <div className='flex flex-col gap-2 max-h-64 overflow-y-auto pr-1'>
+                            {branchs.length === 0 && (
+                                <p className='text-sm text-gray-dark'>Nenhuma filial cadastrada.</p>
+                            )}
+                            {branchs.map((branch) => (
+                                <label key={branch.id} className='flex items-center gap-2 text-sm text-gray-text'>
+                                    <input
+                                        type='checkbox'
+                                        checked={branchsForm.branchsIds.includes(branch.id)}
+                                        onChange={(e) => toggleBranch(branch.id, e.target.checked)}
+                                    />
+                                    {branch.name}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {branchsErro && <Alert>{branchsErro}</Alert>}
+
+                    <div className='flex items-center justify-end gap-2 mt-2'>
+                        <Button type='button' variant='ghost' onClick={closeBranchsModal}>
+                            Cancelar
+                        </Button>
+                        <Button type='submit' disabled={branchsSalvando}>
+                            {branchsSalvando ? 'Salvando...' : 'Salvar'}
                         </Button>
                     </div>
                 </form>
