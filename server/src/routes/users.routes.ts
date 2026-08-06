@@ -23,58 +23,49 @@ type UserBody = {
 
 async function getUsers(res:FastifyReply) {
     try {
-        const search = await db.query(`
-            SELECT
-                u.id,
-                u.name,
-                u.login,
-                u.role,
-                u.status,
-                up.access,
-                m.id AS module_id,
-                m.slug AS module,
-                b.id AS branch_id,
-                b.name AS branch_name
-            FROM users AS u
-            LEFT JOIN user_permissions AS up
-                ON u.id = up.user_id
-            LEFT JOIN modules AS m
-                ON up.module_id = m.id
-            LEFT JOIN user_branchs AS ub
-                ON u.id = ub.user_id
-            LEFT JOIN branchs AS b
-                ON ub.branchs_id = b.id
+        const usersSearch = await db.query(`
+            SELECT id, name, login, role, status FROM users
+        `);
+
+        const permissionsSearch = await db.query(`
+            SELECT up.user_id, m.id AS module_id, m.slug AS module, up.access
+            FROM user_permissions AS up
+            JOIN modules AS m ON m.id = up.module_id
+        `);
+
+        const branchsSearch = await db.query(`
+            SELECT ub.user_id, b.id AS branch_id, b.name AS branch_name
+            FROM user_branchs AS ub
+            JOIN branchs AS b ON b.id = ub.branchs_id
         `);
 
         const users = {};
 
-        for (const row of search.rows) {
-            if(!users[row.id]) {
-                users[row.id] = {
-                    id: row.id,
-                    name: row.name,
-                    login: row.login,
-                    role: row.role,
-                    status: row.status,
-                    permissions: [],
-                    branchs: []
-                }
-            };
-
-            if (row.module_id) {
-                users[row.id].permissions.push({
-                    module_id: row.module_id,
-                    module: row.module,
-                    access: row.access,
-                });
+        for (const row of usersSearch.rows) {
+            users[row.id] = {
+                id: row.id,
+                name: row.name,
+                login: row.login,
+                role: row.role,
+                status: row.status,
+                permissions: [],
+                branchs: []
             }
+        }
 
-            if (row.branch_id) {
-                users[row.id].branchs.push({
-                    id: row.branch_id,
-                    name: row.branch_name
-                })
-            }
+        for (const row of permissionsSearch.rows) {
+            users[row.user_id]?.permissions.push({
+                module_id: row.module_id,
+                module: row.module,
+                access: row.access,
+            });
+        }
+
+        for (const row of branchsSearch.rows) {
+            users[row.user_id]?.branchs.push({
+                id: row.branch_id,
+                name: row.branch_name
+            })
         }
 
         const result = Object.values(users);
@@ -106,6 +97,7 @@ async function syncUserRelations(
                     (user_id, module_id, access, granted_by)
                     VALUES
                     ($1, $2, $3, $4)
+                    ON CONFLICT (user_id, module_id) DO NOTHING
                 `, [userId, permission.module_id, permission.access, grantedBy]);
             }
         }
@@ -119,6 +111,7 @@ async function syncUserRelations(
                     (user_id, branchs_id)
                     VALUES
                     ($1, $2)
+                    ON CONFLICT (user_id, branchs_id) DO NOTHING
                 `, [userId, branchId]);
             }
         }
