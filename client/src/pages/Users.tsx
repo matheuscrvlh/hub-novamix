@@ -363,58 +363,61 @@ export default function Users() {
                 open={permissionsModalOpen}
                 onClose={closePermissionsModal}
                 title={permissionsTarget ? `Permissões de ${permissionsTarget.name}` : 'Permissões'}
+                maxWidthClassName='max-w-2xl'
             >
                 <form onSubmit={handleSavePermissions} className='flex flex-col gap-4'>
-                    <div>
-                        <p className='text-sm font-medium text-gray-text mb-2'>Módulos</p>
-                        <div className='flex flex-col gap-2 max-h-52 overflow-y-auto'>
-                            {modules.length === 0 && (
-                                <p className='text-sm text-gray-dark'>Nenhum módulo cadastrado.</p>
-                            )}
-                            {modules.map((module) => {
-                                const permission = permissionsForm.permissions.find((p) => p.module_id === module.id)
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
+                        <div>
+                            <p className='text-sm font-medium text-gray-text mb-2'>Módulos</p>
+                            <div className='flex flex-col gap-2 max-h-64 overflow-y-auto pr-1'>
+                                {modules.length === 0 && (
+                                    <p className='text-sm text-gray-dark'>Nenhum módulo cadastrado.</p>
+                                )}
+                                {modules.map((module) => {
+                                    const permission = permissionsForm.permissions.find((p) => p.module_id === module.id)
 
-                                return (
-                                    <div key={module.id} className='flex items-center gap-2'>
-                                        <label className='flex items-center gap-2 text-sm text-gray-text flex-1'>
-                                            <input
-                                                type='checkbox'
-                                                checked={!!permission}
-                                                onChange={(e) => toggleModulePermission(module.id, e.target.checked)}
-                                            />
-                                            {module.name}
-                                        </label>
-                                        <select
-                                            value={permission?.access ?? 'read'}
-                                            disabled={!permission}
-                                            onChange={(e) => changeModuleAccess(module.id, e.target.value)}
-                                            className='rounded-md border border-gray-base bg-white px-2 py-1 text-xs text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base disabled:opacity-50'
-                                        >
-                                            <option value='read'>Leitura</option>
-                                            <option value='admin'>Admin</option>
-                                        </select>
-                                    </div>
-                                )
-                            })}
+                                    return (
+                                        <div key={module.id} className='flex items-center gap-2'>
+                                            <label className='flex items-center gap-2 text-sm text-gray-text flex-1'>
+                                                <input
+                                                    type='checkbox'
+                                                    checked={!!permission}
+                                                    onChange={(e) => toggleModulePermission(module.id, e.target.checked)}
+                                                />
+                                                {module.name}
+                                            </label>
+                                            <select
+                                                value={permission?.access ?? 'read'}
+                                                disabled={!permission}
+                                                onChange={(e) => changeModuleAccess(module.id, e.target.value)}
+                                                className='rounded-md border border-gray-base bg-white px-2 py-1 text-xs text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base disabled:opacity-50'
+                                            >
+                                                <option value='read'>Leitura</option>
+                                                <option value='admin'>Admin</option>
+                                            </select>
+                                        </div>
+                                    )
+                                })}
+                            </div>
                         </div>
-                    </div>
 
-                    <div>
-                        <p className='text-sm font-medium text-gray-text mb-2'>Filiais</p>
-                        <div className='flex flex-col gap-2 max-h-52 overflow-y-auto'>
-                            {branchs.length === 0 && (
-                                <p className='text-sm text-gray-dark'>Nenhuma filial cadastrada.</p>
-                            )}
-                            {branchs.map((branch) => (
-                                <label key={branch.id} className='flex items-center gap-2 text-sm text-gray-text'>
-                                    <input
-                                        type='checkbox'
-                                        checked={permissionsForm.branchsIds.includes(branch.id)}
-                                        onChange={(e) => toggleBranch(branch.id, e.target.checked)}
-                                    />
-                                    {branch.name}
-                                </label>
-                            ))}
+                        <div>
+                            <p className='text-sm font-medium text-gray-text mb-2'>Filiais</p>
+                            <div className='flex flex-col gap-2 max-h-64 overflow-y-auto pr-1'>
+                                {branchs.length === 0 && (
+                                    <p className='text-sm text-gray-dark'>Nenhuma filial cadastrada.</p>
+                                )}
+                                {branchs.map((branch) => (
+                                    <label key={branch.id} className='flex items-center gap-2 text-sm text-gray-text'>
+                                        <input
+                                            type='checkbox'
+                                            checked={permissionsForm.branchsIds.includes(branch.id)}
+                                            onChange={(e) => toggleBranch(branch.id, e.target.checked)}
+                                        />
+                                        {branch.name}
+                                    </label>
+                                ))}
+                            </div>
                         </div>
                     </div>
 

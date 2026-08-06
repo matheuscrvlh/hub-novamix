@@ -5,9 +5,10 @@ type ModalProps = {
     onClose: () => void
     title: string
     children: ReactNode
+    maxWidthClassName?: string
 }
 
-export default function Modal({ open, onClose, title, children }: ModalProps) {
+export default function Modal({ open, onClose, title, children, maxWidthClassName = 'max-w-md' }: ModalProps) {
     if (!open) return null
 
     return (
@@ -16,7 +17,7 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
             onClick={onClose}
         >
             <div
-                className='w-full max-w-md rounded-xl bg-white dark:bg-dark-surface p-6 shadow-2xl'
+                className={`w-full ${maxWidthClassName} rounded-xl bg-white dark:bg-dark-surface p-6 shadow-2xl`}
                 onClick={(e) => e.stopPropagation()}
             >
                 <h2 className='text-lg font-semibold text-gray-text dark:text-dark-text mb-4'>{title}</h2>
