@@ -105,13 +105,13 @@ export default function Home() {
                                                 href={module.public_link}
                                                 className='flex-1 text-center rounded-md px-3 py-2 text-sm font-medium bg-transparent border border-gray-base text-gray-text hover:bg-gray dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-surface-2 transition'
                                             >
-                                                Público
+                                                Cliente
                                             </a>
                                             <a
                                                 href={module.private_link}
                                                 className='flex-1 text-center rounded-md px-3 py-2 text-sm font-medium bg-orange-base text-white hover:bg-orange-light transition'
                                             >
-                                                Privado
+                                                Gestão
                                             </a>
                                         </div>
                                     ) : (
