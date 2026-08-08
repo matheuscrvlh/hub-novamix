@@ -228,9 +228,75 @@ async function putUser(req:FastifyRequest<{Body: UserBody}>, res:FastifyReply) {
     }
 }
 
+type MeBody = {
+    name: string;
+    login: string;
+    password?: string;
+}
+
+async function getMe(req:FastifyRequest, res:FastifyReply) {
+    try {
+        const result = await db.query(`
+            SELECT id, name, login, role, status FROM users WHERE id = $1
+        `, [req.user.sub]);
+
+        if (result.rows.length === 0) {
+            res.code(404).send({ error: 'Usuário não encontrado.' })
+            return
+        }
+
+        res.code(200).send(result.rows[0])
+    } catch(error) {
+        console.error(error);
+        throw new Error('Erro ao buscar conta.')
+    }
+}
+
+async function putMe(req:FastifyRequest<{Body: MeBody}>, res:FastifyReply) {
+    const userId = req.user.sub
+    const name = req.body.name?.trim()
+    const login = req.body.login?.trim()
+    const { password } = req.body
+
+    try {
+        const loginTaken = await db.query(`
+            SELECT id FROM users WHERE LOWER(login) = LOWER($1) AND id != $2
+        `, [login, userId]);
+
+        if (loginTaken.rows.length > 0) {
+            res.code(404).send({ error: `Login ${login} já está em uso.` })
+            return
+        }
+
+        if (!password) {
+            await db.query(`
+                UPDATE users
+                SET name = $1, login = $2
+                WHERE id = $3
+            `, [name, login, userId])
+        } else {
+            const hashedPassword = await hashPassword(password)
+
+            await db.query(`
+                UPDATE users
+                SET name = $1, login = $2, password = $3
+                WHERE id = $4
+            `, [name, login, hashedPassword, userId])
+        }
+
+        res.code(200).send({ success: 'Conta atualizada com sucesso.' })
+    } catch(error) {
+        console.error(error);
+        throw new Error('Erro ao atualizar conta.')
+    }
+}
+
 export async function usersRoutes(fastify: FastifyInstance) {
     fastify.get('/users', { preHandler: [authenticate, checkAdmin] }, getUsers );
     fastify.post('/users', { preHandler: [authenticate, checkAdmin] }, postUser );
     fastify.delete('/users', { preHandler: [authenticate, checkAdmin] }, deleteUser );
     fastify.put('/users', { preHandler: [authenticate, checkAdmin] }, putUser );
+
+    fastify.get('/users/me', { preHandler: [authenticate] }, getMe );
+    fastify.put('/users/me', { preHandler: [authenticate] }, putMe );
 }

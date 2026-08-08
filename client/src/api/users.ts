@@ -49,3 +49,25 @@ export async function updateUser(token: string | null, id: number, data: UserPay
 export async function deleteUser(token: string | null, id: number) {
     return client({ url: '/users', token, method: 'DELETE', data: { id } })
 }
+
+export type Me = {
+    id: number
+    name: string
+    login: string
+    role: UserRole
+    status: boolean
+}
+
+export type MePayload = {
+    name: string
+    login: string
+    password?: string
+}
+
+export async function getMe(token: string | null): Promise<Me> {
+    return client({ url: '/users/me', token, method: 'GET' })
+}
+
+export async function updateMe(token: string | null, data: MePayload) {
+    return client({ url: '/users/me', token, method: 'PUT', data })
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState, type SubmitEvent } from 'react'
+import { useEffect, useMemo, useState, type SubmitEvent } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { createUser, deleteUser, getUsers, updateUser, type User, type UserPayload } from '../api/users.ts'
 import { getModules, type Module } from '../api/modules.ts'
@@ -65,6 +65,49 @@ export default function Users() {
     const [branchsForm, setBranchsForm] = useState<BranchsFormState>(emptyBranchsForm)
     const [branchsSalvando, setBranchsSalvando] = useState(false)
     const [branchsErro, setBranchsErro] = useState('')
+
+    const [search, setSearch] = useState('')
+    const [roleFilter, setRoleFilter] = useState<'all' | UserPayload['role']>('all')
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+    const [branchFilter, setBranchFilter] = useState<'all' | number>('all')
+    const [moduleFilter, setModuleFilter] = useState<'all' | number>('all')
+    const [moduleAccessFilter, setModuleAccessFilter] = useState<'all' | string>('all')
+
+    const filteredUsers = useMemo(() => {
+        const term = search.trim().toLowerCase()
+
+        return users.filter((user) => {
+            if (term && !user.name.toLowerCase().includes(term) && !user.login.toLowerCase().includes(term)) {
+                return false
+            }
+
+            if (roleFilter !== 'all' && user.role !== roleFilter) {
+                return false
+            }
+
+            if (statusFilter !== 'all' && user.status !== (statusFilter === 'active')) {
+                return false
+            }
+
+            if (branchFilter !== 'all' && !user.branchs.some((b) => b.id === branchFilter)) {
+                return false
+            }
+
+            if (moduleFilter !== 'all') {
+                const permission = user.permissions.find((p) => p.module_id === moduleFilter)
+
+                if (!permission) {
+                    return false
+                }
+
+                if (moduleAccessFilter !== 'all' && permission.access !== moduleAccessFilter) {
+                    return false
+                }
+            }
+
+            return true
+        })
+    }, [users, search, roleFilter, statusFilter, branchFilter, moduleFilter, moduleAccessFilter])
 
     async function loadUsers() {
         setLoading(true)
@@ -279,10 +322,80 @@ export default function Users() {
                 </div>
             )}
 
+            <div className='mb-4 flex flex-wrap items-center gap-2'>
+                <Input
+                    placeholder='Buscar por nome ou login'
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className='w-full sm:w-56'
+                />
+
+                <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value as typeof roleFilter)}
+                    className='rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
+                >
+                    <option value='all'>Todos os perfis</option>
+                    <option value='user'>Usuário</option>
+                    <option value='admin'>Administrador</option>
+                </select>
+
+                <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                    className='rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
+                >
+                    <option value='all'>Todos os status</option>
+                    <option value='active'>Ativo</option>
+                    <option value='inactive'>Inativo</option>
+                </select>
+
+                <select
+                    value={branchFilter}
+                    onChange={(e) => setBranchFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                    className='rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
+                >
+                    <option value='all'>Todas as filiais</option>
+                    {branchs.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                            {branch.name}
+                        </option>
+                    ))}
+                </select>
+
+                <select
+                    value={moduleFilter}
+                    onChange={(e) => {
+                        setModuleFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))
+                        setModuleAccessFilter('all')
+                    }}
+                    className='rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
+                >
+                    <option value='all'>Todos os módulos</option>
+                    {modules.map((module) => (
+                        <option key={module.id} value={module.id}>
+                            {module.name}
+                        </option>
+                    ))}
+                </select>
+
+                <select
+                    value={moduleAccessFilter}
+                    onChange={(e) => setModuleAccessFilter(e.target.value)}
+                    disabled={moduleFilter === 'all'}
+                    className='rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base disabled:opacity-50 dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
+                >
+                    <option value='all'>Qualquer acesso</option>
+                    <option value='read'>Leitura</option>
+                    <option value='admin'>Admin</option>
+                </select>
+            </div>
+
             <div className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border overflow-x-auto'>
                 <table className='w-full text-sm text-left'>
                     <thead>
                         <tr className='border-b border-gray-base/30 dark:border-dark-border text-gray-dark dark:text-dark-text-muted'>
+                            <th className='px-4 py-3 font-medium'>ID</th>
                             <th className='px-4 py-3 font-medium'>Nome</th>
                             <th className='px-4 py-3 font-medium'>Login</th>
                             <th className='px-4 py-3 font-medium'>Perfil</th>
@@ -293,22 +406,29 @@ export default function Users() {
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan={5} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
+                                <td colSpan={6} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
                                     Carregando...
                                 </td>
                             </tr>
                         ) : users.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
+                                <td colSpan={6} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
                                     Nenhum usuário cadastrado.
                                 </td>
                             </tr>
+                        ) : filteredUsers.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
+                                    Nenhum usuário encontrado para os filtros selecionados.
+                                </td>
+                            </tr>
                         ) : (
-                            users.map((user) => (
+                            filteredUsers.map((user) => (
                                 <tr
                                     key={user.id}
                                     className='border-b last:border-0 border-gray-base/20 dark:border-dark-border text-gray-text dark:text-dark-text'
                                 >
+                                    <td className='px-4 py-3'>{user.id}</td>
                                     <td className='px-4 py-3'>{user.name}</td>
                                     <td className='px-4 py-3'>{user.login}</td>
                                     <td className='px-4 py-3 capitalize'>{user.role}</td>

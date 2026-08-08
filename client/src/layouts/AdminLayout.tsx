@@ -31,6 +31,12 @@ export default function AdminLayout() {
                     >
                         ← Voltar
                     </Link>
+                    <Link
+                        to='/account'
+                        className='text-sm font-medium text-gray-text dark:text-dark-text hover:text-orange-base transition'
+                    >
+                        Minha conta
+                    </Link>
                     <Button variant='ghost' onClick={handleLogout}>
                         Sair
                     </Button>
