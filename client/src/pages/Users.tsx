@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { createUser, deleteUser, getUsers, updateUser, type User, type UserPayload } from '../api/users.ts'
 import { getModules, type Module } from '../api/modules.ts'
 import { getBranchs, type Branch } from '../api/branchs.ts'
+import { getSystems, type System } from '../api/systems.ts'
 import Button from '../components/Button.tsx'
 import Input from '../components/Input.tsx'
 import Alert from '../components/Alert.tsx'
@@ -39,12 +40,21 @@ type BranchsFormState = {
 
 const emptyBranchsForm: BranchsFormState = { branchsIds: [] }
 
+type FormSystem = { system_id: number; user_login: string; user_password: string }
+
+type SystemsFormState = {
+    systems: FormSystem[]
+}
+
+const emptySystemsForm: SystemsFormState = { systems: [] }
+
 export default function Users() {
     const { token } = useAuth()
 
     const [users, setUsers] = useState<User[]>([])
     const [modules, setModules] = useState<Module[]>([])
     const [branchs, setBranchs] = useState<Branch[]>([])
+    const [systems, setSystems] = useState<System[]>([])
     const [loading, setLoading] = useState(true)
     const [erro, setErro] = useState('')
 
@@ -65,6 +75,12 @@ export default function Users() {
     const [branchsForm, setBranchsForm] = useState<BranchsFormState>(emptyBranchsForm)
     const [branchsSalvando, setBranchsSalvando] = useState(false)
     const [branchsErro, setBranchsErro] = useState('')
+
+    const [systemsModalOpen, setSystemsModalOpen] = useState(false)
+    const [systemsTarget, setSystemsTarget] = useState<User | null>(null)
+    const [systemsForm, setSystemsForm] = useState<SystemsFormState>(emptySystemsForm)
+    const [systemsSalvando, setSystemsSalvando] = useState(false)
+    const [systemsErro, setSystemsErro] = useState('')
 
     const [search, setSearch] = useState('')
     const [roleFilter, setRoleFilter] = useState<'all' | UserPayload['role']>('all')
@@ -114,14 +130,16 @@ export default function Users() {
         setErro('')
 
         try {
-            const [usersResult, modulesResult, branchsResult] = await Promise.all([
+            const [usersResult, modulesResult, branchsResult, systemsResult] = await Promise.all([
                 getUsers(token),
                 getModules(token),
-                getBranchs(token)
+                getBranchs(token),
+                getSystems(token)
             ])
             setUsers(usersResult)
             setModules(modulesResult)
             setBranchs(branchsResult)
+            setSystems(systemsResult)
         } catch (error) {
             setErro(error instanceof Error ? error.message : 'Erro ao buscar usuários.')
         } finally {
@@ -209,6 +227,47 @@ export default function Users() {
         }))
     }
 
+    function openSystemsModal(user: User) {
+        setSystemsTarget(user)
+        setSystemsForm({
+            systems: user.systems.map((s) => ({
+                system_id: s.system_id,
+                user_login: s.user_login,
+                user_password: s.user_password
+            }))
+        })
+        setSystemsErro('')
+        setSystemsModalOpen(true)
+    }
+
+    function closeSystemsModal() {
+        setSystemsModalOpen(false)
+        setSystemsTarget(null)
+    }
+
+    function toggleSystem(systemId: number, checked: boolean) {
+        setSystemsForm((prev) => ({
+            ...prev,
+            systems: checked
+                ? [...prev.systems, { system_id: systemId, user_login: '', user_password: '' }]
+                : prev.systems.filter((s) => s.system_id !== systemId)
+        }))
+    }
+
+    function changeSystemLogin(systemId: number, user_login: string) {
+        setSystemsForm((prev) => ({
+            ...prev,
+            systems: prev.systems.map((s) => (s.system_id === systemId ? { ...s, user_login } : s))
+        }))
+    }
+
+    function changeSystemPassword(systemId: number, user_password: string) {
+        setSystemsForm((prev) => ({
+            ...prev,
+            systems: prev.systems.map((s) => (s.system_id === systemId ? { ...s, user_password } : s))
+        }))
+    }
+
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault()
         setSalvando(true)
@@ -285,6 +344,31 @@ export default function Users() {
             setBranchsErro(error instanceof Error ? error.message : 'Erro ao salvar filiais.')
         } finally {
             setBranchsSalvando(false)
+        }
+    }
+
+    async function handleSaveSystems(event: SubmitEvent<HTMLFormElement>) {
+        event.preventDefault()
+        if (!systemsTarget) return
+
+        setSystemsSalvando(true)
+        setSystemsErro('')
+
+        try {
+            await updateUser(token, systemsTarget.id, {
+                name: systemsTarget.name,
+                login: systemsTarget.login,
+                role: systemsTarget.role,
+                status: systemsTarget.status,
+                systems: systemsForm.systems
+            })
+
+            closeSystemsModal()
+            await loadUsers()
+        } catch (error) {
+            setSystemsErro(error instanceof Error ? error.message : 'Erro ao salvar sistemas.')
+        } finally {
+            setSystemsSalvando(false)
         }
     }
 
@@ -461,6 +545,14 @@ export default function Users() {
                                                     </span>
                                                 )}
                                             </Button>
+                                            <Button variant='ghost' onClick={() => openSystemsModal(user)}>
+                                                Sistemas
+                                                {user.systems.length > 0 && (
+                                                    <span className='ml-1 text-orange-base'>
+                                                        ({user.systems.length})
+                                                    </span>
+                                                )}
+                                            </Button>
                                             <Button variant='ghost' onClick={() => openEditModal(user)}>
                                                 Editar
                                             </Button>
@@ -629,6 +721,73 @@ export default function Users() {
                         </Button>
                         <Button type='submit' disabled={branchsSalvando}>
                             {branchsSalvando ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal
+                open={systemsModalOpen}
+                onClose={closeSystemsModal}
+                title={systemsTarget ? `Sistemas de ${systemsTarget.name}` : 'Sistemas'}
+                maxWidthClassName='max-w-lg'
+            >
+                <form onSubmit={handleSaveSystems} className='flex flex-col gap-4'>
+                    <div>
+                        <p className='text-sm font-medium text-gray-text mb-2'>
+                            Sistemas vinculados e login/senha do usuário em cada um
+                        </p>
+                        <div className='flex flex-col gap-3 max-h-80 overflow-y-auto pr-1'>
+                            {systems.length === 0 && (
+                                <p className='text-sm text-gray-dark'>Nenhum sistema cadastrado.</p>
+                            )}
+                            {systems.map((system) => {
+                                const entry = systemsForm.systems.find((s) => s.system_id === system.id)
+
+                                return (
+                                    <div key={system.id} className='rounded-lg border border-gray-base/30 p-3'>
+                                        <label className='flex items-center gap-2 text-sm font-medium text-gray-text mb-2'>
+                                            <input
+                                                type='checkbox'
+                                                checked={!!entry}
+                                                onChange={(e) => toggleSystem(system.id, e.target.checked)}
+                                            />
+                                            {system.name}
+                                        </label>
+
+                                        {entry && (
+                                            <div className='flex flex-col gap-2 pl-6'>
+                                                <Input
+                                                    placeholder='Login do usuário neste sistema'
+                                                    value={entry.user_login}
+                                                    onChange={(e) => changeSystemLogin(system.id, e.target.value)}
+                                                    required
+                                                    alwaysLight
+                                                    autoComplete='off'
+                                                />
+                                                <Input
+                                                    placeholder='Senha do usuário neste sistema'
+                                                    value={entry.user_password}
+                                                    onChange={(e) => changeSystemPassword(system.id, e.target.value)}
+                                                    alwaysLight
+                                                    autoComplete='off'
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                    {systemsErro && <Alert>{systemsErro}</Alert>}
+
+                    <div className='flex items-center justify-end gap-2 mt-2'>
+                        <Button type='button' variant='ghost' onClick={closeSystemsModal}>
+                            Cancelar
+                        </Button>
+                        <Button type='submit' disabled={systemsSalvando}>
+                            {systemsSalvando ? 'Salvando...' : 'Salvar'}
                         </Button>
                     </div>
                 </form>

@@ -13,6 +13,14 @@ export type UserBranch = {
     name: string
 }
 
+export type UserSystem = {
+    system_id: number
+    system_name: string
+    link: string | null
+    user_login: string
+    user_password: string
+}
+
 export type User = {
     id: number
     name: string
@@ -22,6 +30,7 @@ export type User = {
     created_at: string
     permissions: UserPermission[]
     branchs: UserBranch[]
+    systems: UserSystem[]
 }
 
 export type UserPayload = {
@@ -32,6 +41,7 @@ export type UserPayload = {
     status: boolean
     permissions?: { module_id: number; access: string }[]
     branchs_id?: number[]
+    systems?: { system_id: number; user_login: string; user_password?: string }[]
 }
 
 export async function getUsers(token: string | null): Promise<User[]> {
@@ -70,4 +80,8 @@ export async function getMe(token: string | null): Promise<Me> {
 
 export async function updateMe(token: string | null, data: MePayload) {
     return client({ url: '/users/me', token, method: 'PUT', data })
+}
+
+export async function getMySystems(token: string | null): Promise<UserSystem[]> {
+    return client({ url: '/users/me/systems', token, method: 'GET' })
 }

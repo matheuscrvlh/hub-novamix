@@ -13,6 +13,15 @@ if(!process.env.NAME_SEED) {
 async function createTables() {
 
     try {
+        const sectors = await db.query(`
+            CREATE TABLE IF NOT EXISTS sectors (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                status BOOLEAN NOT NULL DEFAULT true,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+        `);
+
         const users = await db.query(`
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -21,7 +30,10 @@ async function createTables() {
                 password VARCHAR(255) NOT NULL,
                 role VARCHAR(20) NOT NULL DEFAULT 'user',
                 status BOOLEAN NOT NULL DEFAULT true,
-                created_at TIMESTAMP DEFAULT NOW()
+                created_at TIMESTAMP DEFAULT NOW(),
+                sector_id INT REFERENCES sectors(id),
+                telephone TEXT UNIQUE,
+                last_login TIMESTAMP
             );
         `);
 
@@ -66,6 +78,27 @@ async function createTables() {
                 granted_at TIMESTAMP DEFAULT NOW(),
                 granted_by INT REFERENCES users(id) ON DELETE SET NULL,
                 unique(user_id, module_id)
+            )
+        `)
+
+        const systems = await db.query(`
+            CREATE TABLE IF NOT EXISTS systems (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                link TEXT,
+                status BOOLEAN NOT NULL DEFAULT true,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )
+        `)
+
+        const users_systems = await db.query(`
+            CREATE TABLE IF NOT EXISTS users_systems (
+                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                system_id INT NOT NULL REFERENCES systems(id) ON DELETE CASCADE,
+                user_login TEXT NOT NULL,
+                user_password BYTEA,
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                PRIMARY KEY (user_id, system_id)
             )
         `)
 

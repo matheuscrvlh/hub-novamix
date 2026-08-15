@@ -1,6 +1,7 @@
 import type { FastifyRequest, FastifyReply, FastifyInstance } from 'fastify';
 import { db } from '../database/database.ts';
 import { hashPassword } from '../utils/hash.ts';
+import { encryptSecret, decryptSecret } from '../utils/crypto.ts';
 import { authenticate, checkAdmin } from '../middlewares/auth.middlewares.ts';
 
 type UserRole = 'user' | 'admin';
@@ -8,6 +9,12 @@ type UserRole = 'user' | 'admin';
 type UserPermissionInput = {
     module_id: number;
     access: string;
+}
+
+type UserSystemInput = {
+    system_id: number;
+    user_login: string;
+    user_password?: string;
 }
 
 type UserBody = {
@@ -19,6 +26,7 @@ type UserBody = {
     status: boolean;
     permissions?: UserPermissionInput[];
     branchs_id?: number[];
+    systems?: UserSystemInput[];
 }
 
 async function getUsers(res:FastifyReply) {
@@ -39,6 +47,12 @@ async function getUsers(res:FastifyReply) {
             JOIN branchs AS b ON b.id = ub.branchs_id
         `);
 
+        const systemsSearch = await db.query(`
+            SELECT us.user_id, s.id AS system_id, s.name AS system_name, s.link, us.user_login, us.user_password
+            FROM users_systems AS us
+            JOIN systems AS s ON s.id = us.system_id
+        `);
+
         const users = {};
 
         for (const row of usersSearch.rows) {
@@ -49,7 +63,8 @@ async function getUsers(res:FastifyReply) {
                 role: row.role,
                 status: row.status,
                 permissions: [],
-                branchs: []
+                branchs: [],
+                systems: []
             }
         }
 
@@ -68,6 +83,16 @@ async function getUsers(res:FastifyReply) {
             })
         }
 
+        for (const row of systemsSearch.rows) {
+            users[row.user_id]?.systems.push({
+                system_id: row.system_id,
+                system_name: row.system_name,
+                link: row.link,
+                user_login: row.user_login,
+                user_password: row.user_password ? decryptSecret(row.user_password) : ''
+            })
+        }
+
         const result = Object.values(users);
         return result
 
@@ -81,6 +106,7 @@ async function syncUserRelations(
     userId: number,
     permissions: UserPermissionInput[] | undefined,
     branchsIds: number[] | undefined,
+    systems: UserSystemInput[] | undefined,
     grantedBy: number
 ) {
     const client = await db.connect();
@@ -116,6 +142,21 @@ async function syncUserRelations(
             }
         }
 
+        if (systems !== undefined) {
+            await client.query('DELETE FROM users_systems WHERE user_id = $1', [userId]);
+
+            for (const system of systems) {
+                const encryptedPassword = system.user_password ? encryptSecret(system.user_password) : null;
+
+                await client.query(`
+                    INSERT INTO users_systems
+                    (user_id, system_id, user_login, user_password)
+                    VALUES
+                    ($1, $2, $3, $4)
+                `, [userId, system.system_id, system.user_login, encryptedPassword]);
+            }
+        }
+
         await client.query('COMMIT');
     } catch (error) {
         await client.query('ROLLBACK');
@@ -126,7 +167,7 @@ async function syncUserRelations(
 }
 
 async function postUser(req:FastifyRequest<{Body: UserBody}>, res:FastifyReply) {
-    const { name, login, password, role, permissions, branchs_id } = req.body
+    const { name, login, password, role, permissions, branchs_id, systems } = req.body
 
     const hashedPassword = await hashPassword(password);
     try {
@@ -152,7 +193,7 @@ async function postUser(req:FastifyRequest<{Body: UserBody}>, res:FastifyReply) 
             return
         }
 
-        await syncUserRelations(result.rows[0].id, permissions, branchs_id, req.user.sub);
+        await syncUserRelations(result.rows[0].id, permissions, branchs_id, systems, req.user.sub);
 
         res.code(200).send({ success: 'Sucesso ao cadastrar usuário.' })
     } catch(error) {
@@ -189,7 +230,7 @@ async function deleteUser(req:FastifyRequest<{Body: UserBody}>, res:FastifyReply
 }
 
 async function putUser(req:FastifyRequest<{Body: UserBody}>, res:FastifyReply) {
-    const { id, name, login, password, role, status, permissions, branchs_id } = req.body
+    const { id, name, login, password, role, status, permissions, branchs_id, systems } = req.body
 
     try {
         const search = await db.query(`
@@ -219,7 +260,7 @@ async function putUser(req:FastifyRequest<{Body: UserBody}>, res:FastifyReply) {
             `,[ name, login, hashedPassword, role, status, id])
         }
 
-        await syncUserRelations(id, permissions, branchs_id, req.user.sub);
+        await syncUserRelations(id, permissions, branchs_id, systems, req.user.sub);
 
         res.code(200).send({ success: `O usuário ${search.rows[0].name} editado com sucesso.` })
     } catch(error) {
@@ -291,6 +332,30 @@ async function putMe(req:FastifyRequest<{Body: MeBody}>, res:FastifyReply) {
     }
 }
 
+async function getMySystems(req:FastifyRequest, res:FastifyReply) {
+    try {
+        const result = await db.query(`
+            SELECT s.id AS system_id, s.name AS system_name, s.link, us.user_login, us.user_password
+            FROM users_systems AS us
+            JOIN systems AS s ON s.id = us.system_id
+            WHERE us.user_id = $1 AND s.status = true
+        `, [req.user.sub]);
+
+        const systems = result.rows.map((row: any) => ({
+            system_id: row.system_id,
+            system_name: row.system_name,
+            link: row.link,
+            user_login: row.user_login,
+            user_password: row.user_password ? decryptSecret(row.user_password) : ''
+        }));
+
+        res.code(200).send(systems)
+    } catch(error) {
+        console.error(error);
+        throw new Error('Erro ao buscar sistemas da conta.')
+    }
+}
+
 export async function usersRoutes(fastify: FastifyInstance) {
     fastify.get('/users', { preHandler: [authenticate, checkAdmin] }, getUsers );
     fastify.post('/users', { preHandler: [authenticate, checkAdmin] }, postUser );
@@ -299,4 +364,5 @@ export async function usersRoutes(fastify: FastifyInstance) {
 
     fastify.get('/users/me', { preHandler: [authenticate] }, getMe );
     fastify.put('/users/me', { preHandler: [authenticate] }, putMe );
+    fastify.get('/users/me/systems', { preHandler: [authenticate] }, getMySystems );
 }

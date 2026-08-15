@@ -7,7 +7,8 @@ import Footer from '../components/Footer.tsx'
 const tabs = [
     { to: 'users', label: 'Usuários' },
     { to: 'branchs', label: 'Filiais' },
-    { to: 'modules', label: 'Módulos' }
+    { to: 'modules', label: 'Módulos' },
+    { to: 'systems', label: 'Sistemas' }
 ]
 
 export default function AdminLayout() {
