@@ -117,7 +117,7 @@ export default function Modules() {
 
     return (
         <>
-            <div className='flex items-center justify-between mb-6 gap-4'>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4'>
                 <div>
                     <h1 className='text-2xl font-semibold text-gray-text dark:text-dark-text mb-1'>
                         Módulos
@@ -127,7 +127,7 @@ export default function Modules() {
                     </p>
                 </div>
 
-                <Button onClick={openCreateModal}>Novo módulo</Button>
+                <Button onClick={openCreateModal} className='self-start sm:self-auto'>Novo módulo</Button>
             </div>
 
             {erro && (
@@ -136,7 +136,7 @@ export default function Modules() {
                 </div>
             )}
 
-            <div className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border overflow-x-auto'>
+            <div className='hidden md:block rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border overflow-x-auto'>
                 <table className='w-full text-sm text-left'>
                     <thead>
                         <tr className='border-b border-gray-base/30 dark:border-dark-border text-gray-dark dark:text-dark-text-muted'>
@@ -197,6 +197,64 @@ export default function Modules() {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            <div className='md:hidden flex flex-col gap-3'>
+                {loading ? (
+                    <p className='px-1 py-6 text-center text-sm text-gray-dark dark:text-dark-text-muted'>
+                        Carregando...
+                    </p>
+                ) : modules.length === 0 ? (
+                    <p className='px-1 py-6 text-center text-sm text-gray-dark dark:text-dark-text-muted'>
+                        Nenhum módulo cadastrado.
+                    </p>
+                ) : (
+                    modules.map((module) => (
+                        <div
+                            key={module.id}
+                            className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border p-4'
+                        >
+                            <div className='flex items-center justify-between gap-2 mb-2'>
+                                <p className='font-medium text-gray-text dark:text-dark-text truncate'>
+                                    {module.name}
+                                </p>
+                                <span
+                                    className={`shrink-0 rounded-full text-xs font-medium px-2 py-1 ${
+                                        module.status
+                                            ? 'bg-green-base/10 text-green-base'
+                                            : 'bg-red-base/10 text-red-base'
+                                    }`}
+                                >
+                                    {module.status ? 'Ativo' : 'Inativo'}
+                                </span>
+                            </div>
+
+                            <dl className='text-sm text-gray-dark dark:text-dark-text-muted space-y-1 mb-3'>
+                                <div className='flex gap-2'>
+                                    <dt className='shrink-0'>Slug:</dt>
+                                    <dd className='truncate text-gray-text dark:text-dark-text'>{module.slug}</dd>
+                                </div>
+                                <div className='flex gap-2'>
+                                    <dt className='shrink-0'>Link público:</dt>
+                                    <dd className='truncate text-gray-text dark:text-dark-text'>{module.public_link}</dd>
+                                </div>
+                                <div className='flex gap-2'>
+                                    <dt className='shrink-0'>Link privado:</dt>
+                                    <dd className='truncate text-gray-text dark:text-dark-text'>{module.private_link}</dd>
+                                </div>
+                            </dl>
+
+                            <div className='flex flex-wrap gap-2'>
+                                <Button variant='ghost' onClick={() => openEditModal(module)}>
+                                    Editar
+                                </Button>
+                                <Button variant='danger' onClick={() => handleDelete(module)}>
+                                    Excluir
+                                </Button>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Editar módulo' : 'Novo módulo'}>

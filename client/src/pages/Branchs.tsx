@@ -99,7 +99,7 @@ export default function Branchs() {
 
     return (
         <>
-            <div className='flex items-center justify-between mb-6 gap-4'>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4'>
                 <div>
                     <h1 className='text-2xl font-semibold text-gray-text dark:text-dark-text mb-1'>
                         Filiais
@@ -109,7 +109,7 @@ export default function Branchs() {
                     </p>
                 </div>
 
-                <Button onClick={openCreateModal}>Nova filial</Button>
+                <Button onClick={openCreateModal} className='self-start sm:self-auto'>Nova filial</Button>
             </div>
 
             {erro && (
@@ -118,7 +118,7 @@ export default function Branchs() {
                 </div>
             )}
 
-            <div className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border overflow-x-auto'>
+            <div className='hidden md:block rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border overflow-x-auto'>
                 <table className='w-full text-sm text-left'>
                     <thead>
                         <tr className='border-b border-gray-base/30 dark:border-dark-border text-gray-dark dark:text-dark-text-muted'>
@@ -173,6 +173,49 @@ export default function Branchs() {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            <div className='md:hidden flex flex-col gap-3'>
+                {loading ? (
+                    <p className='px-1 py-6 text-center text-sm text-gray-dark dark:text-dark-text-muted'>
+                        Carregando...
+                    </p>
+                ) : branchs.length === 0 ? (
+                    <p className='px-1 py-6 text-center text-sm text-gray-dark dark:text-dark-text-muted'>
+                        Nenhuma filial cadastrada.
+                    </p>
+                ) : (
+                    branchs.map((branch) => (
+                        <div
+                            key={branch.id}
+                            className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border p-4'
+                        >
+                            <div className='flex items-center justify-between gap-2 mb-3'>
+                                <p className='font-medium text-gray-text dark:text-dark-text truncate'>
+                                    {branch.name}
+                                </p>
+                                <span
+                                    className={`shrink-0 rounded-full text-xs font-medium px-2 py-1 ${
+                                        branch.status
+                                            ? 'bg-green-base/10 text-green-base'
+                                            : 'bg-red-base/10 text-red-base'
+                                    }`}
+                                >
+                                    {branch.status ? 'Ativa' : 'Inativa'}
+                                </span>
+                            </div>
+
+                            <div className='flex flex-wrap gap-2'>
+                                <Button variant='ghost' onClick={() => openEditModal(branch)}>
+                                    Editar
+                                </Button>
+                                <Button variant='danger' onClick={() => handleDelete(branch)}>
+                                    Excluir
+                                </Button>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Editar filial' : 'Nova filial'}>

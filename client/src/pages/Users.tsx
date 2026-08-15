@@ -387,7 +387,7 @@ export default function Users() {
 
     return (
         <>
-            <div className='flex items-center justify-between mb-6 gap-4'>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4'>
                 <div>
                     <h1 className='text-2xl font-semibold text-gray-text dark:text-dark-text mb-1'>
                         Usuários
@@ -397,7 +397,7 @@ export default function Users() {
                     </p>
                 </div>
 
-                <Button onClick={openCreateModal}>Novo usuário</Button>
+                <Button onClick={openCreateModal} className='self-start sm:self-auto'>Novo usuário</Button>
             </div>
 
             {erro && (
@@ -417,7 +417,7 @@ export default function Users() {
                 <select
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value as typeof roleFilter)}
-                    className='rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
+                    className='flex-1 min-w-35 sm:flex-none sm:w-auto rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
                 >
                     <option value='all'>Todos os perfis</option>
                     <option value='user'>Usuário</option>
@@ -427,7 +427,7 @@ export default function Users() {
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                    className='rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
+                    className='flex-1 min-w-35 sm:flex-none sm:w-auto rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
                 >
                     <option value='all'>Todos os status</option>
                     <option value='active'>Ativo</option>
@@ -437,7 +437,7 @@ export default function Users() {
                 <select
                     value={branchFilter}
                     onChange={(e) => setBranchFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                    className='rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
+                    className='flex-1 min-w-35 sm:flex-none sm:w-auto rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
                 >
                     <option value='all'>Todas as filiais</option>
                     {branchs.map((branch) => (
@@ -453,7 +453,7 @@ export default function Users() {
                         setModuleFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))
                         setModuleAccessFilter('all')
                     }}
-                    className='rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
+                    className='flex-1 min-w-35 sm:flex-none sm:w-auto rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
                 >
                     <option value='all'>Todos os módulos</option>
                     {modules.map((module) => (
@@ -475,7 +475,7 @@ export default function Users() {
                 </select>
             </div>
 
-            <div className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border overflow-x-auto'>
+            <div className='hidden md:block rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border overflow-x-auto'>
                 <table className='w-full text-sm text-left'>
                     <thead>
                         <tr className='border-b border-gray-base/30 dark:border-dark-border text-gray-dark dark:text-dark-text-muted'>
@@ -566,6 +566,92 @@ export default function Users() {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            <div className='md:hidden flex flex-col gap-3'>
+                {loading ? (
+                    <p className='px-1 py-6 text-center text-sm text-gray-dark dark:text-dark-text-muted'>
+                        Carregando...
+                    </p>
+                ) : users.length === 0 ? (
+                    <p className='px-1 py-6 text-center text-sm text-gray-dark dark:text-dark-text-muted'>
+                        Nenhum usuário cadastrado.
+                    </p>
+                ) : filteredUsers.length === 0 ? (
+                    <p className='px-1 py-6 text-center text-sm text-gray-dark dark:text-dark-text-muted'>
+                        Nenhum usuário encontrado para os filtros selecionados.
+                    </p>
+                ) : (
+                    filteredUsers.map((user) => (
+                        <div
+                            key={user.id}
+                            className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border p-4'
+                        >
+                            <div className='flex items-center justify-between gap-2 mb-2'>
+                                <p className='font-medium text-gray-text dark:text-dark-text truncate'>
+                                    {user.name}
+                                </p>
+                                <span
+                                    className={`shrink-0 rounded-full text-xs font-medium px-2 py-1 ${
+                                        user.status
+                                            ? 'bg-green-base/10 text-green-base'
+                                            : 'bg-red-base/10 text-red-base'
+                                    }`}
+                                >
+                                    {user.status ? 'Ativo' : 'Inativo'}
+                                </span>
+                            </div>
+
+                            <dl className='text-sm text-gray-dark dark:text-dark-text-muted space-y-1 mb-3'>
+                                <div className='flex gap-2'>
+                                    <dt className='shrink-0'>ID:</dt>
+                                    <dd className='text-gray-text dark:text-dark-text'>{user.id}</dd>
+                                </div>
+                                <div className='flex gap-2'>
+                                    <dt className='shrink-0'>Login:</dt>
+                                    <dd className='truncate text-gray-text dark:text-dark-text'>{user.login}</dd>
+                                </div>
+                                <div className='flex gap-2'>
+                                    <dt className='shrink-0'>Perfil:</dt>
+                                    <dd className='capitalize text-gray-text dark:text-dark-text'>{user.role}</dd>
+                                </div>
+                            </dl>
+
+                            <div className='flex flex-wrap gap-2'>
+                                <Button variant='ghost' onClick={() => openPermissionsModal(user)}>
+                                    Permissões
+                                    {user.permissions.length > 0 && (
+                                        <span className='ml-1 text-orange-base'>
+                                            ({user.permissions.length})
+                                        </span>
+                                    )}
+                                </Button>
+                                <Button variant='ghost' onClick={() => openBranchsModal(user)}>
+                                    Filiais
+                                    {user.branchs.length > 0 && (
+                                        <span className='ml-1 text-orange-base'>
+                                            ({user.branchs.length})
+                                        </span>
+                                    )}
+                                </Button>
+                                <Button variant='ghost' onClick={() => openSystemsModal(user)}>
+                                    Sistemas
+                                    {user.systems.length > 0 && (
+                                        <span className='ml-1 text-orange-base'>
+                                            ({user.systems.length})
+                                        </span>
+                                    )}
+                                </Button>
+                                <Button variant='ghost' onClick={() => openEditModal(user)}>
+                                    Editar
+                                </Button>
+                                <Button variant='danger' onClick={() => handleDelete(user)}>
+                                    Excluir
+                                </Button>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Editar usuário' : 'Novo usuário'}>

@@ -22,35 +22,35 @@ export default function AdminLayout() {
 
     return (
         <main className='w-full min-h-screen bg-gray dark:bg-dark-bg flex flex-col'>
-            <header className='w-full bg-white dark:bg-dark-surface shadow-sm flex items-center justify-between px-6'>
+            <header className='w-full bg-white dark:bg-dark-surface shadow-sm flex flex-wrap items-center justify-between gap-y-2 gap-x-4 px-4 py-2 sm:px-6'>
                 <Logo compact />
 
-                <div className='flex items-center gap-4'>
+                <div className='flex items-center gap-3 sm:gap-4'>
                     <Link
                         to='/home'
-                        className='text-sm font-medium text-gray-text dark:text-dark-text hover:text-orange-base transition'
+                        className='text-xs sm:text-sm font-medium text-gray-text dark:text-dark-text hover:text-orange-base transition whitespace-nowrap'
                     >
                         ← Voltar
                     </Link>
                     <Link
                         to='/account'
-                        className='text-sm font-medium text-gray-text dark:text-dark-text hover:text-orange-base transition'
+                        className='text-xs sm:text-sm font-medium text-gray-text dark:text-dark-text hover:text-orange-base transition whitespace-nowrap'
                     >
                         Minha conta
                     </Link>
-                    <Button variant='ghost' onClick={handleLogout}>
+                    <Button variant='ghost' onClick={handleLogout} className='px-2 sm:px-4'>
                         Sair
                     </Button>
                 </div>
             </header>
 
-            <nav className='w-full bg-white dark:bg-dark-surface border-t border-gray-base/20 dark:border-dark-border px-6 flex gap-6'>
+            <nav className='w-full bg-white dark:bg-dark-surface border-t border-gray-base/20 dark:border-dark-border px-4 sm:px-6 flex gap-4 sm:gap-6 overflow-x-auto'>
                 {tabs.map((tab) => (
                     <NavLink
                         key={tab.to}
                         to={tab.to}
                         className={({ isActive }) =>
-                            `py-3 text-sm font-medium border-b-2 transition ${
+                            `py-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${
                                 isActive
                                     ? 'border-orange-base text-orange-base'
                                     : 'border-transparent text-gray-dark dark:text-dark-text-muted hover:text-orange-base'
@@ -62,7 +62,7 @@ export default function AdminLayout() {
                 ))}
             </nav>
 
-            <section className='flex-1 w-full max-w-5xl mx-auto px-6 py-10'>
+            <section className='flex-1 w-full max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-10'>
                 <Outlet />
             </section>
 

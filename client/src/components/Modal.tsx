@@ -13,15 +13,17 @@ export default function Modal({ open, onClose, title, children, maxWidthClassNam
 
     return (
         <div
-            className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4'
+            className='fixed inset-0 z-50 overflow-y-auto bg-black/50 px-4 py-6'
             onClick={onClose}
         >
-            <div
-                className={`w-full ${maxWidthClassName} rounded-xl bg-white dark:bg-dark-surface p-6 shadow-2xl`}
-                onClick={(e) => e.stopPropagation()}
-            >
-                <h2 className='text-lg font-semibold text-gray-text dark:text-dark-text mb-4'>{title}</h2>
-                {children}
+            <div className='flex min-h-full items-center justify-center'>
+                <div
+                    className={`w-full ${maxWidthClassName} rounded-xl bg-white dark:bg-dark-surface p-4 sm:p-6 shadow-2xl`}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <h2 className='text-lg font-semibold text-gray-text dark:text-dark-text mb-4'>{title}</h2>
+                    {children}
+                </div>
             </div>
         </div>
     )

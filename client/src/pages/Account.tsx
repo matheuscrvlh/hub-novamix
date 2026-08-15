@@ -104,23 +104,23 @@ export default function Account() {
 
     return (
         <main className='w-full min-h-screen bg-gray dark:bg-dark-bg flex flex-col'>
-            <header className='w-full bg-white dark:bg-dark-surface shadow-sm flex items-center justify-between px-6'>
+            <header className='w-full bg-white dark:bg-dark-surface shadow-sm flex flex-wrap items-center justify-between gap-y-2 gap-x-4 px-4 py-2 sm:px-6'>
                 <Logo compact />
 
-                <div className='flex items-center gap-4'>
+                <div className='flex items-center gap-3 sm:gap-4'>
                     <Link
                         to={role === 'admin' ? '/admin' : '/home'}
-                        className='text-sm font-medium text-gray-text dark:text-dark-text hover:text-orange-base transition'
+                        className='text-xs sm:text-sm font-medium text-gray-text dark:text-dark-text hover:text-orange-base transition whitespace-nowrap'
                     >
                         ← Voltar
                     </Link>
-                    <Button variant='ghost' onClick={handleLogout}>
+                    <Button variant='ghost' onClick={handleLogout} className='px-2 sm:px-4'>
                         Sair
                     </Button>
                 </div>
             </header>
 
-            <section className='flex-1 w-full max-w-md mx-auto px-6 py-10'>
+            <section className='flex-1 w-full max-w-md mx-auto px-4 py-6 sm:px-6 sm:py-10'>
                 <h1 className='text-2xl font-semibold text-gray-text dark:text-dark-text mb-1'>
                     Minha conta
                 </h1>
@@ -177,7 +177,7 @@ export default function Account() {
                 )}
             </section>
 
-            <section className='w-full max-w-2xl mx-auto px-6 pb-10'>
+            <section className='w-full max-w-2xl mx-auto px-4 pb-10 sm:px-6'>
                 <h2 className='text-xl font-semibold text-gray-text dark:text-dark-text mb-1'>
                     Meus sistemas
                 </h2>
@@ -204,8 +204,8 @@ export default function Account() {
                                 key={system.system_id}
                                 className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border p-4'
                             >
-                                <div className='flex items-center justify-between mb-2'>
-                                    <p className='text-sm font-semibold text-gray-text dark:text-dark-text'>
+                                <div className='flex items-center justify-between gap-2 mb-2'>
+                                    <p className='min-w-0 truncate text-sm font-semibold text-gray-text dark:text-dark-text'>
                                         {system.system_name}
                                     </p>
                                     {system.link && (
@@ -213,7 +213,7 @@ export default function Account() {
                                             href={system.link}
                                             target='_blank'
                                             rel='noreferrer'
-                                            className='text-xs font-medium text-orange-base hover:underline'
+                                            className='shrink-0 text-xs font-medium text-orange-base hover:underline'
                                         >
                                             Acessar
                                         </a>
@@ -221,13 +221,13 @@ export default function Account() {
                                 </div>
 
                                 <div className='flex flex-col gap-1 text-sm text-gray-text dark:text-dark-text'>
-                                    <p>
+                                    <p className='break-all'>
                                         <span className='text-gray-dark dark:text-dark-text-muted'>Login: </span>
                                         {system.user_login}
                                     </p>
-                                    <p className='flex items-center gap-2'>
+                                    <p className='flex flex-wrap items-center gap-2'>
                                         <span className='text-gray-dark dark:text-dark-text-muted'>Senha: </span>
-                                        <span>
+                                        <span className='break-all'>
                                             {visiblePasswords.includes(system.system_id)
                                                 ? system.user_password
                                                 : '••••••••'}
