@@ -28,6 +28,8 @@ export type User = {
     role: UserRole
     status: boolean
     created_at: string
+    sector_id: number | null
+    sector_name: string | null
     permissions: UserPermission[]
     branchs: UserBranch[]
     systems: UserSystem[]
@@ -39,6 +41,7 @@ export type UserPayload = {
     password?: string
     role: UserRole
     status: boolean
+    sector_id?: number | null
     permissions?: { module_id: number; access: string }[]
     branchs_id?: number[]
     systems?: { system_id: number; user_login: string; user_password?: string }[]

@@ -8,6 +8,7 @@ import { usersRoutes } from "./routes/users.routes.ts";
 import { branchsRoutes } from "./routes/branchs.routes.ts";
 import { modulesRoutes } from "./routes/modules.routes.ts";
 import { systemsRoutes } from "./routes/systems.routes.ts";
+import { sectorsRoutes } from "./routes/sectors.routes.ts";
 
 const app = Fastify();
 
@@ -30,6 +31,7 @@ app.register(usersRoutes)
 app.register(branchsRoutes)
 app.register(modulesRoutes)
 app.register(systemsRoutes)
+app.register(sectorsRoutes)
 
 async function start() {
     await app.listen({ host: '0.0.0.0', port: process.env.SERVER_PORT });

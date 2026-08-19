@@ -24,6 +24,7 @@ type UserBody = {
     password: string;
     role: UserRole;
     status: boolean;
+    sector_id?: number | null;
     permissions?: UserPermissionInput[];
     branchs_id?: number[];
     systems?: UserSystemInput[];
@@ -32,7 +33,9 @@ type UserBody = {
 async function getUsers(res:FastifyReply) {
     try {
         const usersSearch = await db.query(`
-            SELECT id, name, login, role, status FROM users
+            SELECT u.id, u.name, u.login, u.role, u.status, u.sector_id, s.name AS sector_name
+            FROM users AS u
+            LEFT JOIN sectors AS s ON s.id = u.sector_id
         `);
 
         const permissionsSearch = await db.query(`
@@ -62,6 +65,8 @@ async function getUsers(res:FastifyReply) {
                 login: row.login,
                 role: row.role,
                 status: row.status,
+                sector_id: row.sector_id,
+                sector_name: row.sector_name,
                 permissions: [],
                 branchs: [],
                 systems: []
@@ -167,7 +172,7 @@ async function syncUserRelations(
 }
 
 async function postUser(req:FastifyRequest<{Body: UserBody}>, res:FastifyReply) {
-    const { name, login, password, role, permissions, branchs_id, systems } = req.body
+    const { name, login, password, role, sector_id, permissions, branchs_id, systems } = req.body
 
     const hashedPassword = await hashPassword(password);
     try {
@@ -182,11 +187,11 @@ async function postUser(req:FastifyRequest<{Body: UserBody}>, res:FastifyReply) 
 
         const result = await db.query(`
             INSERT INTO users
-            (name, login, password, role)
+            (name, login, password, role, sector_id)
             VALUES
-            ($1, $2, $3, $4)
+            ($1, $2, $3, $4, $5)
             RETURNING id
-        `,[name, login, hashedPassword, role]);
+        `,[name, login, hashedPassword, role, sector_id ?? null]);
 
         if(result.rows.length === 0) {
             res.code(404).send({ error: 'Erro ao cadastrar usuário.' })
@@ -230,7 +235,7 @@ async function deleteUser(req:FastifyRequest<{Body: UserBody}>, res:FastifyReply
 }
 
 async function putUser(req:FastifyRequest<{Body: UserBody}>, res:FastifyReply) {
-    const { id, name, login, password, role, status, permissions, branchs_id, systems } = req.body
+    const { id, name, login, password, role, status, sector_id, permissions, branchs_id, systems } = req.body
 
     try {
         const search = await db.query(`
@@ -247,17 +252,17 @@ async function putUser(req:FastifyRequest<{Body: UserBody}>, res:FastifyReply) {
         if(!password) {
             await db.query(`
                 UPDATE users
-                SET name = $1, login = $2, role = $3, status = $4
-                WHERE id = $5
-            `,[ name, login, role, status, id])
+                SET name = $1, login = $2, role = $3, status = $4, sector_id = $5
+                WHERE id = $6
+            `,[ name, login, role, status, sector_id ?? null, id])
         } else {
             const hashedPassword = await hashPassword(password)
 
             await db.query(`
                 UPDATE users
-                SET name = $1, login = $2, password = $3, role = $4, status = $5
-                WHERE id = $6
-            `,[ name, login, hashedPassword, role, status, id])
+                SET name = $1, login = $2, password = $3, role = $4, status = $5, sector_id = $6
+                WHERE id = $7
+            `,[ name, login, hashedPassword, role, status, sector_id ?? null, id])
         }
 
         await syncUserRelations(id, permissions, branchs_id, systems, req.user.sub);

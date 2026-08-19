@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { decodeToken, isTokenExpired, type TokenBranch, type TokenPermission } from '../lib/jwt.ts'
+import { decodeToken, isTokenExpired, type TokenBranch, type TokenPermission, type TokenSector } from '../lib/jwt.ts'
 import { AuthContext } from './auth-context.ts'
 
 function decodePayload(token: string) {
@@ -12,7 +12,8 @@ function decodePayload(token: string) {
     return {
         role: payload.role ?? null,
         permissions: payload.permissions ?? [],
-        branchs: payload.branchs ?? []
+        branchs: payload.branchs ?? [],
+        sector: payload.sector ?? null
     }
 }
 
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [role, setRole] = useState<string | null>(initialPayload?.role ?? null)
     const [permissions, setPermissions] = useState<TokenPermission[]>(initialPayload?.permissions ?? [])
     const [branchs, setBranchs] = useState<TokenBranch[]>(initialPayload?.branchs ?? [])
+    const [sector, setSector] = useState<TokenSector | null>(initialPayload?.sector ?? null)
 
     function login(token: string) {
         const decoded = decodePayload(token)
@@ -48,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRole(decoded.role)
         setPermissions(decoded.permissions)
         setBranchs(decoded.branchs)
+        setSector(decoded.sector)
     }
 
     function logout() {
@@ -56,10 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRole(null)
         setPermissions([])
         setBranchs([])
+        setSector(null)
     }
 
     return (
-        <AuthContext.Provider value={{ token, role, permissions, branchs, login, logout }}>
+        <AuthContext.Provider value={{ token, role, permissions, branchs, sector, login, logout }}>
             {children}
         </AuthContext.Provider>
     )

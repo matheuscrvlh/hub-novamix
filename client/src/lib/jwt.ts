@@ -8,11 +8,17 @@ export type TokenBranch = {
     name: string
 }
 
+export type TokenSector = {
+    id: number
+    name: string
+}
+
 export type TokenPayload = {
     sub: number
     role: string
     permissions: TokenPermission[]
     branchs: TokenBranch[]
+    sector: TokenSector | null
     exp: number
 }
 

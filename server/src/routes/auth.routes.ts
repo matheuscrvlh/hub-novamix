@@ -14,7 +14,7 @@ async function login(req:FastifyRequest<{Body: loginBody}>, res:FastifyReply) {
 
     try {
         const searchPasswordUser = await db.query(`
-            SELECT id, password, role FROM users
+            SELECT id, password, role, sector_id FROM users
             WHERE LOWER(login) = LOWER($1) OR id::text = $1
         `, [identifier])
 
@@ -42,11 +42,18 @@ async function login(req:FastifyRequest<{Body: loginBody}>, res:FastifyReply) {
             WHERE ub.user_id = $1
         `,[searchPasswordUser.rows[0].id])
 
+        const sectorResult = await db.query(`
+            SELECT id, name
+            FROM sectors
+            WHERE id = $1
+        `,[searchPasswordUser.rows[0].sector_id])
+
         const token = await generateToken(
             searchPasswordUser.rows[0].id,
             searchPasswordUser.rows[0].role,
             permissionsResult.rows,
-            branchsResult.rows
+            branchsResult.rows,
+            sectorResult.rows[0] ?? null
         )
 
         res.setCookie('token', token, {

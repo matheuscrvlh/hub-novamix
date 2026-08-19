@@ -7,6 +7,7 @@ import Footer from '../components/Footer.tsx'
 const tabs = [
     { to: 'users', label: 'Usuários' },
     { to: 'branchs', label: 'Filiais' },
+    { to: 'sectors', label: 'Setores' },
     { to: 'modules', label: 'Módulos' },
     { to: 'systems', label: 'Sistemas' }
 ]

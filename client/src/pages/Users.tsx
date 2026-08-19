@@ -4,6 +4,7 @@ import { createUser, deleteUser, getUsers, updateUser, type User, type UserPaylo
 import { getModules, type Module } from '../api/modules.ts'
 import { getBranchs, type Branch } from '../api/branchs.ts'
 import { getSystems, type System } from '../api/systems.ts'
+import { getSectors, type Sector } from '../api/sectors.ts'
 import Button from '../components/Button.tsx'
 import Input from '../components/Input.tsx'
 import Alert from '../components/Alert.tsx'
@@ -17,6 +18,7 @@ type FormState = {
     password: string
     role: UserPayload['role']
     status: boolean
+    sector_id: number | null
 }
 
 const emptyForm: FormState = {
@@ -24,7 +26,8 @@ const emptyForm: FormState = {
     login: '',
     password: '',
     role: 'user',
-    status: true
+    status: true,
+    sector_id: null
 }
 
 type PermissionsFormState = {
@@ -55,6 +58,7 @@ export default function Users() {
     const [modules, setModules] = useState<Module[]>([])
     const [branchs, setBranchs] = useState<Branch[]>([])
     const [systems, setSystems] = useState<System[]>([])
+    const [sectors, setSectors] = useState<Sector[]>([])
     const [loading, setLoading] = useState(true)
     const [erro, setErro] = useState('')
 
@@ -130,16 +134,18 @@ export default function Users() {
         setErro('')
 
         try {
-            const [usersResult, modulesResult, branchsResult, systemsResult] = await Promise.all([
+            const [usersResult, modulesResult, branchsResult, systemsResult, sectorsResult] = await Promise.all([
                 getUsers(token),
                 getModules(token),
                 getBranchs(token),
-                getSystems(token)
+                getSystems(token),
+                getSectors(token)
             ])
             setUsers(usersResult)
             setModules(modulesResult)
             setBranchs(branchsResult)
             setSystems(systemsResult)
+            setSectors(sectorsResult)
         } catch (error) {
             setErro(error instanceof Error ? error.message : 'Erro ao buscar usuários.')
         } finally {
@@ -165,7 +171,8 @@ export default function Users() {
             login: user.login,
             password: '',
             role: user.role,
-            status: user.status
+            status: user.status,
+            sector_id: user.sector_id
         })
         setFormErro('')
         setModalOpen(true)
@@ -278,6 +285,7 @@ export default function Users() {
             login: form.login,
             role: form.role,
             status: form.status,
+            sector_id: form.sector_id,
             ...(form.password ? { password: form.password } : {})
         }
 
@@ -310,6 +318,7 @@ export default function Users() {
                 login: permissionsTarget.login,
                 role: permissionsForm.role,
                 status: permissionsTarget.status,
+                sector_id: permissionsTarget.sector_id,
                 permissions: permissionsForm.permissions
             })
 
@@ -335,6 +344,7 @@ export default function Users() {
                 login: branchsTarget.login,
                 role: branchsTarget.role,
                 status: branchsTarget.status,
+                sector_id: branchsTarget.sector_id,
                 branchs_id: branchsForm.branchsIds
             })
 
@@ -360,6 +370,7 @@ export default function Users() {
                 login: systemsTarget.login,
                 role: systemsTarget.role,
                 status: systemsTarget.status,
+                sector_id: systemsTarget.sector_id,
                 systems: systemsForm.systems
             })
 
@@ -483,6 +494,7 @@ export default function Users() {
                             <th className='px-4 py-3 font-medium'>Nome</th>
                             <th className='px-4 py-3 font-medium'>Login</th>
                             <th className='px-4 py-3 font-medium'>Perfil</th>
+                            <th className='px-4 py-3 font-medium'>Setor</th>
                             <th className='px-4 py-3 font-medium'>Status</th>
                             <th className='px-4 py-3 font-medium text-right'>Ações</th>
                         </tr>
@@ -490,19 +502,19 @@ export default function Users() {
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan={6} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
+                                <td colSpan={7} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
                                     Carregando...
                                 </td>
                             </tr>
                         ) : users.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
+                                <td colSpan={7} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
                                     Nenhum usuário cadastrado.
                                 </td>
                             </tr>
                         ) : filteredUsers.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
+                                <td colSpan={7} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
                                     Nenhum usuário encontrado para os filtros selecionados.
                                 </td>
                             </tr>
@@ -516,6 +528,7 @@ export default function Users() {
                                     <td className='px-4 py-3'>{user.name}</td>
                                     <td className='px-4 py-3'>{user.login}</td>
                                     <td className='px-4 py-3 capitalize'>{user.role}</td>
+                                    <td className='px-4 py-3'>{user.sector_name ?? '—'}</td>
                                     <td className='px-4 py-3'>
                                         <span
                                             className={`rounded-full text-xs font-medium px-2 py-1 ${
@@ -615,6 +628,10 @@ export default function Users() {
                                     <dt className='shrink-0'>Perfil:</dt>
                                     <dd className='capitalize text-gray-text dark:text-dark-text'>{user.role}</dd>
                                 </div>
+                                <div className='flex gap-2'>
+                                    <dt className='shrink-0'>Setor:</dt>
+                                    <dd className='text-gray-text dark:text-dark-text'>{user.sector_name ?? '—'}</dd>
+                                </div>
                             </dl>
 
                             <div className='flex flex-wrap gap-2'>
@@ -681,6 +698,19 @@ export default function Users() {
                         alwaysLight
                         autoComplete='new-password'
                     />
+
+                    <select
+                        value={form.sector_id ?? ''}
+                        onChange={(e) => setForm({ ...form, sector_id: e.target.value ? Number(e.target.value) : null })}
+                        className='w-full rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base'
+                    >
+                        <option value=''>Sem setor</option>
+                        {sectors.map((sector) => (
+                            <option key={sector.id} value={sector.id}>
+                                {sector.name}
+                            </option>
+                        ))}
+                    </select>
 
                     <label className='flex items-center gap-2 text-sm text-gray-text'>
                         <input

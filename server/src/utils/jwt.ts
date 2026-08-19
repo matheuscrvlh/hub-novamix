@@ -1,11 +1,12 @@
 import jwt from 'jsonwebtoken'
 
-export function generateToken(sub: number, role: string, permissions: Permissions[], branchs: Branch[]) {
+export function generateToken(sub: number, role: string, permissions: Permissions[], branchs: Branch[], sector: Sector | null) {
     const payload = {
         sub: sub,
         role: role,
         permissions,
-        branchs
+        branchs,
+        sector
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });

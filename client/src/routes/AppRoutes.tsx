@@ -7,6 +7,7 @@ import Users from '../pages/Users.tsx'
 import Branchs from '../pages/Branchs.tsx'
 import Modules from '../pages/Modules.tsx'
 import Systems from '../pages/Systems.tsx'
+import Sectors from '../pages/Sectors.tsx'
 import AdminLayout from '../layouts/AdminLayout.tsx'
 import ProtectedRoute from './ProtectedRoute.tsx'
 import AdminRoute from './AdminRoute.tsx'
@@ -34,6 +35,7 @@ export default function AppRoutes() {
                         <Route path='branchs' element={<Branchs />} />
                         <Route path='modules' element={<Modules />} />
                         <Route path='systems' element={<Systems />} />
+                        <Route path='sectors' element={<Sectors />} />
                     </Route>
                 </Route>
             </Route>
