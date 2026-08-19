@@ -90,6 +90,7 @@ export default function Users() {
     const [roleFilter, setRoleFilter] = useState<'all' | UserPayload['role']>('all')
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
     const [branchFilter, setBranchFilter] = useState<'all' | number>('all')
+    const [sectorFilter, setSectorFilter] = useState<'all' | number>('all')
     const [moduleFilter, setModuleFilter] = useState<'all' | number>('all')
     const [moduleAccessFilter, setModuleAccessFilter] = useState<'all' | string>('all')
 
@@ -113,6 +114,10 @@ export default function Users() {
                 return false
             }
 
+            if (sectorFilter !== 'all' && user.sector_id !== sectorFilter) {
+                return false
+            }
+
             if (moduleFilter !== 'all') {
                 const permission = user.permissions.find((p) => p.module_id === moduleFilter)
 
@@ -127,7 +132,7 @@ export default function Users() {
 
             return true
         })
-    }, [users, search, roleFilter, statusFilter, branchFilter, moduleFilter, moduleAccessFilter])
+    }, [users, search, roleFilter, statusFilter, branchFilter, sectorFilter, moduleFilter, moduleAccessFilter])
 
     async function loadUsers() {
         setLoading(true)
@@ -459,6 +464,19 @@ export default function Users() {
                 </select>
 
                 <select
+                    value={sectorFilter}
+                    onChange={(e) => setSectorFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                    className='flex-1 min-w-35 sm:flex-none sm:w-auto rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
+                >
+                    <option value='all'>Todos os setores</option>
+                    {sectors.map((sector) => (
+                        <option key={sector.id} value={sector.id}>
+                            {sector.name}
+                        </option>
+                    ))}
+                </select>
+
+                <select
                     value={moduleFilter}
                     onChange={(e) => {
                         setModuleFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))
@@ -541,8 +559,8 @@ export default function Users() {
                                         </span>
                                     </td>
                                     <td className='px-4 py-3'>
-                                        <div className='flex items-center justify-end gap-2'>
-                                            <Button variant='ghost' onClick={() => openPermissionsModal(user)}>
+                                        <div className='flex flex-wrap items-center justify-end gap-2'>
+                                            <Button variant='ghost' className='whitespace-nowrap' onClick={() => openPermissionsModal(user)}>
                                                 Permissões
                                                 {user.permissions.length > 0 && (
                                                     <span className='ml-1 text-orange-base'>
@@ -550,7 +568,7 @@ export default function Users() {
                                                     </span>
                                                 )}
                                             </Button>
-                                            <Button variant='ghost' onClick={() => openBranchsModal(user)}>
+                                            <Button variant='ghost' className='whitespace-nowrap' onClick={() => openBranchsModal(user)}>
                                                 Filiais
                                                 {user.branchs.length > 0 && (
                                                     <span className='ml-1 text-orange-base'>
@@ -558,7 +576,7 @@ export default function Users() {
                                                     </span>
                                                 )}
                                             </Button>
-                                            <Button variant='ghost' onClick={() => openSystemsModal(user)}>
+                                            <Button variant='ghost' className='whitespace-nowrap' onClick={() => openSystemsModal(user)}>
                                                 Sistemas
                                                 {user.systems.length > 0 && (
                                                     <span className='ml-1 text-orange-base'>
@@ -566,10 +584,10 @@ export default function Users() {
                                                     </span>
                                                 )}
                                             </Button>
-                                            <Button variant='ghost' onClick={() => openEditModal(user)}>
+                                            <Button variant='ghost' className='whitespace-nowrap' onClick={() => openEditModal(user)}>
                                                 Editar
                                             </Button>
-                                            <Button variant='danger' onClick={() => handleDelete(user)}>
+                                            <Button variant='danger' className='whitespace-nowrap' onClick={() => handleDelete(user)}>
                                                 Excluir
                                             </Button>
                                         </div>
