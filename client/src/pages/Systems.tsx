@@ -3,6 +3,8 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { createSystem, deleteSystem, getSystems, updateSystem, type System, type SystemPayload } from '../api/systems.ts'
 import Button from '../components/Button.tsx'
 import IconButton from '../components/IconButton.tsx'
+import ConfirmModal from '../components/ConfirmModal.tsx'
+import { Pencil, Trash, Plus } from 'lucide-react'
 import Input from '../components/Input.tsx'
 import Select from '../components/Select.tsx'
 import Alert from '../components/Alert.tsx'
@@ -28,6 +30,10 @@ export default function Systems() {
     const [form, setForm] = useState<FormState>(emptyForm)
     const [salvando, setSalvando] = useState(false)
     const [formErro, setFormErro] = useState('')
+
+    const [deleteTarget, setDeleteTarget] = useState<System | null>(null)
+    const [deleting, setDeleting] = useState(false)
+    const [deleteErro, setDeleteErro] = useState('')
 
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active')
@@ -107,16 +113,25 @@ export default function Systems() {
         }
     }
 
-    async function handleDelete(system: System) {
-        if (!window.confirm(`Excluir o sistema ${system.name}?`)) {
-            return
-        }
+    function handleDelete(system: System) {
+        setDeleteErro('')
+        setDeleteTarget(system)
+    }
+
+    async function confirmDelete() {
+        if (!deleteTarget) return
+
+        setDeleting(true)
+        setDeleteErro('')
 
         try {
-            await deleteSystem(token, system.id, system.name)
+            await deleteSystem(token, deleteTarget.id, deleteTarget.name)
+            setDeleteTarget(null)
             await loadSystems()
         } catch (error) {
-            setErro(error instanceof Error ? error.message : 'Erro ao excluir sistema.')
+            setDeleteErro(error instanceof Error ? error.message : 'Erro ao excluir sistema.')
+        } finally {
+            setDeleting(false)
         }
     }
 
@@ -132,7 +147,14 @@ export default function Systems() {
                     </p>
                 </div>
 
-                <Button onClick={openCreateModal} className='self-start sm:self-auto'>Novo sistema</Button>
+                <Button
+                    onClick={openCreateModal}
+                    aria-label='Novo sistema'
+                    title='Novo sistema'
+                    className='self-start sm:self-auto p-2.5'
+                >
+                    <Plus size={18} />
+                </Button>
             </div>
 
             {erro && (
@@ -210,8 +232,8 @@ export default function Systems() {
                                     </td>
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
-                                            <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(system)} />
-                                            <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(system)} />
+                                            <IconButton icon={<Pencil size={16} />} label='Editar' variant='edit' onClick={() => openEditModal(system)} />
+                                            <IconButton icon={<Trash size={16} />} label='Excluir' variant='danger' onClick={() => handleDelete(system)} />
                                         </div>
                                     </td>
                                 </tr>
@@ -262,8 +284,8 @@ export default function Systems() {
                             )}
 
                             <div className='flex flex-wrap gap-2'>
-                                <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(system)} />
-                                <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(system)} />
+                                <IconButton icon={<Pencil size={16} />} label='Editar' variant='edit' onClick={() => openEditModal(system)} />
+                                <IconButton icon={<Trash size={16} />} label='Excluir' variant='danger' onClick={() => handleDelete(system)} />
                             </div>
                         </div>
                     ))
@@ -309,6 +331,16 @@ export default function Systems() {
                     </div>
                 </form>
             </Modal>
+
+            <ConfirmModal
+                open={!!deleteTarget}
+                title='Excluir sistema'
+                message={`Tem certeza que deseja excluir o sistema "${deleteTarget?.name}"? Essa ação não pode ser desfeita.`}
+                loading={deleting}
+                erro={deleteErro}
+                onConfirm={confirmDelete}
+                onClose={() => setDeleteTarget(null)}
+            />
         </>
     )
 }

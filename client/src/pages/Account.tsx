@@ -1,5 +1,5 @@
 import { useEffect, useState, type SubmitEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.ts'
 import { getMe, getMySystems, updateMe, type Me, type UserSystem } from '../api/users.ts'
 import Button from '../components/Button.tsx'
@@ -17,7 +17,7 @@ type FormState = {
 const emptyForm: FormState = { name: '', login: '', password: '' }
 
 export default function Account() {
-    const { token, role, logout } = useAuth()
+    const { token, logout } = useAuth()
     const navigate = useNavigate()
 
     const [, setMe] = useState<Me | null>(null)
@@ -108,12 +108,13 @@ export default function Account() {
                 <Logo compact />
 
                 <div className='flex items-center gap-3 sm:gap-4'>
-                    <Link
-                        to={role === 'admin' ? '/admin' : '/home'}
+                    <button
+                        type='button'
+                        onClick={() => navigate(-1)}
                         className='text-xs sm:text-sm font-medium text-gray-text dark:text-dark-text hover:text-orange-base transition whitespace-nowrap'
                     >
                         ← Voltar
-                    </Link>
+                    </button>
                     <Button variant='ghost' onClick={handleLogout} className='px-2 sm:px-4'>
                         Sair
                     </Button>

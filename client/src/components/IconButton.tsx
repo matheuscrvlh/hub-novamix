@@ -1,7 +1,7 @@
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 type IconButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-    icon: string
+    icon: ReactNode
     label: string
     variant: 'permission' | 'branch' | 'system' | 'edit' | 'danger'
     count?: number

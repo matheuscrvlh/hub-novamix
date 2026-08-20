@@ -7,6 +7,8 @@ import { getSystems, type System } from '../api/systems.ts'
 import { getSectors, type Sector } from '../api/sectors.ts'
 import Button from '../components/Button.tsx'
 import IconButton from '../components/IconButton.tsx'
+import ConfirmModal from '../components/ConfirmModal.tsx'
+import { Pencil, Trash, Plus, Store, UserKey, Grip, ShieldCheck, Check } from 'lucide-react'
 import Input from '../components/Input.tsx'
 import Select from '../components/Select.tsx'
 import Alert from '../components/Alert.tsx'
@@ -69,6 +71,10 @@ export default function Users() {
     const [form, setForm] = useState<FormState>(emptyForm)
     const [salvando, setSalvando] = useState(false)
     const [formErro, setFormErro] = useState('')
+
+    const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
+    const [deleting, setDeleting] = useState(false)
+    const [deleteErro, setDeleteErro] = useState('')
 
     const [permissionsModalOpen, setPermissionsModalOpen] = useState(false)
     const [permissionsTarget, setPermissionsTarget] = useState<User | null>(null)
@@ -408,16 +414,25 @@ export default function Users() {
         }
     }
 
-    async function handleDelete(user: User) {
-        if (!window.confirm(`Excluir o usuário ${user.name}?`)) {
-            return
-        }
+    function handleDelete(user: User) {
+        setDeleteErro('')
+        setDeleteTarget(user)
+    }
+
+    async function confirmDelete() {
+        if (!deleteTarget) return
+
+        setDeleting(true)
+        setDeleteErro('')
 
         try {
-            await deleteUser(token, user.id)
+            await deleteUser(token, deleteTarget.id)
+            setDeleteTarget(null)
             await loadUsers()
         } catch (error) {
-            setErro(error instanceof Error ? error.message : 'Erro ao excluir usuário.')
+            setDeleteErro(error instanceof Error ? error.message : 'Erro ao excluir usuário.')
+        } finally {
+            setDeleting(false)
         }
     }
 
@@ -433,7 +448,14 @@ export default function Users() {
                     </p>
                 </div>
 
-                <Button onClick={openCreateModal} className='self-start sm:self-auto'>Novo usuário</Button>
+                <Button
+                    onClick={openCreateModal}
+                    aria-label='Novo usuário'
+                    title='Novo usuário'
+                    className='self-start sm:self-auto p-2.5'
+                >
+                    <Plus size={18} />
+                </Button>
             </div>
 
             {erro && (
@@ -634,28 +656,28 @@ export default function Users() {
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
                                             <IconButton
-                                                icon='🔒'
+                                                icon={<UserKey size={16} />}
                                                 label='Permissões'
                                                 variant='permission'
                                                 count={user.permissions.length}
                                                 onClick={() => openPermissionsModal(user)}
                                             />
                                             <IconButton
-                                                icon='🏢'
+                                                icon={<Store size={16} />}
                                                 label='Filiais'
                                                 variant='branch'
                                                 count={user.branchs.length}
                                                 onClick={() => openBranchsModal(user)}
                                             />
                                             <IconButton
-                                                icon='💻'
+                                                icon={<Grip size={16} />}
                                                 label='Sistemas'
                                                 variant='system'
                                                 count={user.systems.length}
                                                 onClick={() => openSystemsModal(user)}
                                             />
-                                            <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(user)} />
-                                            <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(user)} />
+                                            <IconButton icon={<Pencil size={16} />} label='Editar' variant='edit' onClick={() => openEditModal(user)} />
+                                            <IconButton icon={<Trash size={16} />} label='Excluir' variant='danger' onClick={() => handleDelete(user)} />
                                         </div>
                                     </td>
                                 </tr>
@@ -720,28 +742,28 @@ export default function Users() {
 
                             <div className='flex flex-wrap items-center gap-2'>
                                 <IconButton
-                                    icon='🔒'
+                                    icon={<UserKey size={16} />}
                                     label='Permissões'
                                     variant='permission'
                                     count={user.permissions.length}
                                     onClick={() => openPermissionsModal(user)}
                                 />
                                 <IconButton
-                                    icon='🏢'
+                                    icon={<Store size={16} />}
                                     label='Filiais'
                                     variant='branch'
                                     count={user.branchs.length}
                                     onClick={() => openBranchsModal(user)}
                                 />
                                 <IconButton
-                                    icon='💻'
+                                    icon={<Grip size={16} />}
                                     label='Sistemas'
                                     variant='system'
                                     count={user.systems.length}
                                     onClick={() => openSystemsModal(user)}
                                 />
-                                <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(user)} />
-                                <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(user)} />
+                                <IconButton icon={<Pencil size={16} />} label='Editar' variant='edit' onClick={() => openEditModal(user)} />
+                                <IconButton icon={<Trash size={16} />} label='Excluir' variant='danger' onClick={() => handleDelete(user)} />
                             </div>
                         </div>
                     ))
@@ -776,10 +798,10 @@ export default function Users() {
                         autoComplete='new-password'
                     />
 
-                    <select
+                    <Select
                         value={form.sector_id ?? ''}
                         onChange={(e) => setForm({ ...form, sector_id: e.target.value ? Number(e.target.value) : null })}
-                        className='w-full rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base'
+                        alwaysLight
                     >
                         <option value=''>Sem setor</option>
                         {sectors.map((sector) => (
@@ -787,7 +809,7 @@ export default function Users() {
                                 {sector.name}
                             </option>
                         ))}
-                    </select>
+                    </Select>
 
                     <label className='flex items-center gap-2 text-sm text-gray-text'>
                         <input
@@ -816,22 +838,25 @@ export default function Users() {
                 onClose={closePermissionsModal}
                 title={permissionsTarget ? `Permissões de ${permissionsTarget.name}` : 'Permissões'}
             >
-                <form onSubmit={handleSavePermissions} className='flex flex-col gap-4'>
-                    <div className='rounded-lg border border-orange-base/40 bg-orange-base/5 p-3'>
-                        <p className='text-sm font-semibold text-gray-text mb-1'>Acesso ao Hub</p>
-                        <p className='text-xs text-gray-dark mb-2'>
-                            Administradores têm acesso total à área /admin do hub.
+                <form onSubmit={handleSavePermissions} className='flex flex-col gap-5'>
+                    <div className='rounded-lg border border-blue-base/30 bg-blue-base/5 p-4'>
+                        <div className='flex items-center gap-2 mb-1'>
+                            <ShieldCheck size={16} className='text-blue-base shrink-0' />
+                            <p className='text-sm font-semibold text-gray-text'>Acesso ao Hub</p>
+                        </div>
+                        <p className='text-xs text-gray-dark mb-3'>
+                            Administradores têm acesso total à área administrativa do hub.
                         </p>
-                        <select
+                        <Select
                             value={permissionsForm.role}
                             onChange={(e) =>
                                 setPermissionsForm((prev) => ({ ...prev, role: e.target.value as UserPayload['role'] }))
                             }
-                            className='w-full rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base'
+                            alwaysLight
                         >
                             <option value='user'>Usuário</option>
                             <option value='admin'>Administrador</option>
-                        </select>
+                        </Select>
                     </div>
 
                     <div>
@@ -842,26 +867,53 @@ export default function Users() {
                             )}
                             {modules.map((module) => {
                                 const permission = permissionsForm.permissions.find((p) => p.module_id === module.id)
+                                const checked = !!permission
 
                                 return (
-                                    <div key={module.id} className='flex items-center gap-2'>
-                                        <label className='flex items-center gap-2 text-sm text-gray-text flex-1'>
+                                    <div
+                                        key={module.id}
+                                        className={`flex items-center justify-between gap-3 rounded-lg border p-3 transition ${
+                                            checked
+                                                ? 'border-orange-base/50 bg-orange-base/5'
+                                                : 'border-gray-base/30 dark:border-dark-border'
+                                        }`}
+                                    >
+                                        <label className='flex flex-1 items-center gap-2.5 text-sm text-gray-text dark:text-dark-text cursor-pointer'>
                                             <input
                                                 type='checkbox'
-                                                checked={!!permission}
+                                                checked={checked}
                                                 onChange={(e) => toggleModulePermission(module.id, e.target.checked)}
+                                                className='h-4 w-4 accent-orange-base'
                                             />
-                                            {module.name}
+                                            <span className='font-medium'>{module.name}</span>
                                         </label>
-                                        <select
-                                            value={permission?.access ?? 'read'}
-                                            disabled={!permission}
-                                            onChange={(e) => changeModuleAccess(module.id, e.target.value)}
-                                            className='rounded-md border border-gray-base bg-white px-2 py-1 text-xs text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base disabled:opacity-50'
-                                        >
-                                            <option value='read'>Leitura</option>
-                                            <option value='admin'>Admin</option>
-                                        </select>
+
+                                        {checked && (
+                                            <div className='flex shrink-0 overflow-hidden rounded-md border border-gray-base/30 dark:border-dark-border'>
+                                                <button
+                                                    type='button'
+                                                    onClick={() => changeModuleAccess(module.id, 'read')}
+                                                    className={`px-2.5 py-1 text-xs font-medium transition ${
+                                                        permission.access === 'read'
+                                                            ? 'bg-orange-base text-white'
+                                                            : 'bg-transparent text-gray-dark hover:bg-gray dark:text-dark-text-muted dark:hover:bg-dark-surface-2'
+                                                    }`}
+                                                >
+                                                    Leitura
+                                                </button>
+                                                <button
+                                                    type='button'
+                                                    onClick={() => changeModuleAccess(module.id, 'admin')}
+                                                    className={`border-l border-gray-base/30 px-2.5 py-1 text-xs font-medium transition dark:border-dark-border ${
+                                                        permission.access === 'admin'
+                                                            ? 'bg-orange-base text-white'
+                                                            : 'bg-transparent text-gray-dark hover:bg-gray dark:text-dark-text-muted dark:hover:bg-dark-surface-2'
+                                                    }`}
+                                                >
+                                                    Admin
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 )
                             })}
@@ -889,21 +941,37 @@ export default function Users() {
                 <form onSubmit={handleSaveBranchs} className='flex flex-col gap-4'>
                     <div>
                         <p className='text-sm font-medium text-gray-text mb-2'>Filiais liberadas</p>
-                        <div className='flex flex-col gap-2 max-h-64 overflow-y-auto pr-1'>
-                            {branchs.length === 0 && (
-                                <p className='text-sm text-gray-dark'>Nenhuma filial cadastrada.</p>
-                            )}
-                            {branchs.map((branch) => (
-                                <label key={branch.id} className='flex items-center gap-2 text-sm text-gray-text'>
-                                    <input
-                                        type='checkbox'
-                                        checked={branchsForm.branchsIds.includes(branch.id)}
-                                        onChange={(e) => toggleBranch(branch.id, e.target.checked)}
-                                    />
-                                    {branch.name}
-                                </label>
-                            ))}
-                        </div>
+                        {branchs.length === 0 ? (
+                            <p className='text-sm text-gray-dark'>Nenhuma filial cadastrada.</p>
+                        ) : (
+                            <div className='grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1'>
+                                {branchs.map((branch) => {
+                                    const checked = branchsForm.branchsIds.includes(branch.id)
+
+                                    return (
+                                        <button
+                                            key={branch.id}
+                                            type='button'
+                                            onClick={() => toggleBranch(branch.id, !checked)}
+                                            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
+                                                checked
+                                                    ? 'border-gray-base bg-gray-base/10 font-medium text-gray-base'
+                                                    : 'border-gray-base/30 text-gray-text hover:bg-gray dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-surface-2'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                                                    checked ? 'border-gray-base bg-gray-base text-white' : 'border-gray-base/40'
+                                                }`}
+                                            >
+                                                {checked && <Check size={12} strokeWidth={3} />}
+                                            </span>
+                                            <span className='truncate'>{branch.name}</span>
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     {branchsErro && <Alert>{branchsErro}</Alert>}
@@ -930,26 +998,35 @@ export default function Users() {
                         <p className='text-sm font-medium text-gray-text mb-2'>
                             Sistemas vinculados e login/senha do usuário em cada um
                         </p>
-                        <div className='flex flex-col gap-3 max-h-80 overflow-y-auto pr-1'>
+                        <div className='flex flex-col gap-2 max-h-80 overflow-y-auto pr-1'>
                             {systems.length === 0 && (
                                 <p className='text-sm text-gray-dark'>Nenhum sistema cadastrado.</p>
                             )}
                             {systems.map((system) => {
                                 const entry = systemsForm.systems.find((s) => s.system_id === system.id)
+                                const checked = !!entry
 
                                 return (
-                                    <div key={system.id} className='rounded-lg border border-gray-base/30 p-3'>
-                                        <label className='flex items-center gap-2 text-sm font-medium text-gray-text mb-2'>
+                                    <div
+                                        key={system.id}
+                                        className={`rounded-lg border p-3 transition ${
+                                            checked
+                                                ? 'border-gray-dark/40 bg-gray-dark/5'
+                                                : 'border-gray-base/30 dark:border-dark-border'
+                                        }`}
+                                    >
+                                        <label className='flex items-center gap-2.5 text-sm font-medium text-gray-text dark:text-dark-text cursor-pointer'>
                                             <input
                                                 type='checkbox'
-                                                checked={!!entry}
+                                                checked={checked}
                                                 onChange={(e) => toggleSystem(system.id, e.target.checked)}
+                                                className='h-4 w-4 accent-gray-dark'
                                             />
                                             {system.name}
                                         </label>
 
                                         {entry && (
-                                            <div className='flex flex-col gap-2 pl-6'>
+                                            <div className='flex flex-col gap-2 mt-3 pl-6'>
                                                 <Input
                                                     placeholder='Login do usuário neste sistema'
                                                     value={entry.user_login}
@@ -985,6 +1062,16 @@ export default function Users() {
                     </div>
                 </form>
             </Modal>
+
+            <ConfirmModal
+                open={!!deleteTarget}
+                title='Excluir usuário'
+                message={`Tem certeza que deseja excluir o usuário "${deleteTarget?.name}"? Essa ação não pode ser desfeita.`}
+                loading={deleting}
+                erro={deleteErro}
+                onConfirm={confirmDelete}
+                onClose={() => setDeleteTarget(null)}
+            />
         </>
     )
 }

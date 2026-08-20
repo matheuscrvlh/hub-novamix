@@ -3,6 +3,8 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { createBranch, deleteBranch, getBranchs, updateBranch, type Branch, type BranchPayload } from '../api/branchs.ts'
 import Button from '../components/Button.tsx'
 import IconButton from '../components/IconButton.tsx'
+import ConfirmModal from '../components/ConfirmModal.tsx'
+import { Pencil, Trash, Plus } from 'lucide-react'
 import Input from '../components/Input.tsx'
 import Alert from '../components/Alert.tsx'
 import Modal from '../components/Modal.tsx'
@@ -26,6 +28,10 @@ export default function Branchs() {
     const [form, setForm] = useState<FormState>(emptyForm)
     const [salvando, setSalvando] = useState(false)
     const [formErro, setFormErro] = useState('')
+
+    const [deleteTarget, setDeleteTarget] = useState<Branch | null>(null)
+    const [deleting, setDeleting] = useState(false)
+    const [deleteErro, setDeleteErro] = useState('')
 
     async function loadBranchs() {
         setLoading(true)
@@ -85,16 +91,25 @@ export default function Branchs() {
         }
     }
 
-    async function handleDelete(branch: Branch) {
-        if (!window.confirm(`Excluir a filial ${branch.name}?`)) {
-            return
-        }
+    function handleDelete(branch: Branch) {
+        setDeleteErro('')
+        setDeleteTarget(branch)
+    }
+
+    async function confirmDelete() {
+        if (!deleteTarget) return
+
+        setDeleting(true)
+        setDeleteErro('')
 
         try {
-            await deleteBranch(token, branch.id, branch.name)
+            await deleteBranch(token, deleteTarget.id, deleteTarget.name)
+            setDeleteTarget(null)
             await loadBranchs()
         } catch (error) {
-            setErro(error instanceof Error ? error.message : 'Erro ao excluir filial.')
+            setDeleteErro(error instanceof Error ? error.message : 'Erro ao excluir filial.')
+        } finally {
+            setDeleting(false)
         }
     }
 
@@ -110,7 +125,14 @@ export default function Branchs() {
                     </p>
                 </div>
 
-                <Button onClick={openCreateModal} className='self-start sm:self-auto'>Nova filial</Button>
+                <Button
+                    onClick={openCreateModal}
+                    aria-label='Nova filial'
+                    title='Nova filial'
+                    className='self-start sm:self-auto p-2.5'
+                >
+                    <Plus size={18} />
+                </Button>
             </div>
 
             {erro && (
@@ -161,8 +183,8 @@ export default function Branchs() {
                                     </td>
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
-                                            <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(branch)} />
-                                            <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(branch)} />
+                                            <IconButton icon={<Pencil size={16} />} label='Editar' variant='edit' onClick={() => openEditModal(branch)} />
+                                            <IconButton icon={<Trash size={16} />} label='Excluir' variant='danger' onClick={() => handleDelete(branch)} />
                                         </div>
                                     </td>
                                 </tr>
@@ -203,8 +225,8 @@ export default function Branchs() {
                             </div>
 
                             <div className='flex flex-wrap gap-2'>
-                                <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(branch)} />
-                                <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(branch)} />
+                                <IconButton icon={<Pencil size={16} />} label='Editar' variant='edit' onClick={() => openEditModal(branch)} />
+                                <IconButton icon={<Trash size={16} />} label='Excluir' variant='danger' onClick={() => handleDelete(branch)} />
                             </div>
                         </div>
                     ))
@@ -244,6 +266,16 @@ export default function Branchs() {
                     </div>
                 </form>
             </Modal>
+
+            <ConfirmModal
+                open={!!deleteTarget}
+                title='Excluir filial'
+                message={`Tem certeza que deseja excluir a filial "${deleteTarget?.name}"? Essa ação não pode ser desfeita.`}
+                loading={deleting}
+                erro={deleteErro}
+                onConfirm={confirmDelete}
+                onClose={() => setDeleteTarget(null)}
+            />
         </>
     )
 }

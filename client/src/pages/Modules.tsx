@@ -3,6 +3,8 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { createModule, deleteModule, getModules, updateModule, type Module, type ModulePayload } from '../api/modules.ts'
 import Button from '../components/Button.tsx'
 import IconButton from '../components/IconButton.tsx'
+import ConfirmModal from '../components/ConfirmModal.tsx'
+import { Pencil, Trash, Plus } from 'lucide-react'
 import Input from '../components/Input.tsx'
 import Select from '../components/Select.tsx'
 import Alert from '../components/Alert.tsx'
@@ -31,6 +33,10 @@ export default function Modules() {
     const [form, setForm] = useState<FormState>(emptyForm)
     const [salvando, setSalvando] = useState(false)
     const [formErro, setFormErro] = useState('')
+
+    const [deleteTarget, setDeleteTarget] = useState<Module | null>(null)
+    const [deleting, setDeleting] = useState(false)
+    const [deleteErro, setDeleteErro] = useState('')
 
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active')
@@ -123,16 +129,25 @@ export default function Modules() {
         }
     }
 
-    async function handleDelete(module: Module) {
-        if (!window.confirm(`Excluir o módulo ${module.name}?`)) {
-            return
-        }
+    function handleDelete(module: Module) {
+        setDeleteErro('')
+        setDeleteTarget(module)
+    }
+
+    async function confirmDelete() {
+        if (!deleteTarget) return
+
+        setDeleting(true)
+        setDeleteErro('')
 
         try {
-            await deleteModule(token, module.id, module.name)
+            await deleteModule(token, deleteTarget.id, deleteTarget.name)
+            setDeleteTarget(null)
             await loadModules()
         } catch (error) {
-            setErro(error instanceof Error ? error.message : 'Erro ao excluir módulo.')
+            setDeleteErro(error instanceof Error ? error.message : 'Erro ao excluir módulo.')
+        } finally {
+            setDeleting(false)
         }
     }
 
@@ -148,7 +163,14 @@ export default function Modules() {
                     </p>
                 </div>
 
-                <Button onClick={openCreateModal} className='self-start sm:self-auto'>Novo módulo</Button>
+                <Button
+                    onClick={openCreateModal}
+                    aria-label='Novo módulo'
+                    title='Novo módulo'
+                    className='self-start sm:self-auto p-2.5'
+                >
+                    <Plus size={18} />
+                </Button>
             </div>
 
             {erro && (
@@ -230,8 +252,8 @@ export default function Modules() {
                                     </td>
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
-                                            <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(module)} />
-                                            <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(module)} />
+                                            <IconButton icon={<Pencil size={16} />} label='Editar' variant='edit' onClick={() => openEditModal(module)} />
+                                            <IconButton icon={<Trash size={16} />} label='Excluir' variant='danger' onClick={() => handleDelete(module)} />
                                         </div>
                                     </td>
                                 </tr>
@@ -291,8 +313,8 @@ export default function Modules() {
                             </dl>
 
                             <div className='flex flex-wrap gap-2'>
-                                <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(module)} />
-                                <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(module)} />
+                                <IconButton icon={<Pencil size={16} />} label='Editar' variant='edit' onClick={() => openEditModal(module)} />
+                                <IconButton icon={<Trash size={16} />} label='Excluir' variant='danger' onClick={() => handleDelete(module)} />
                             </div>
                         </div>
                     ))
@@ -360,6 +382,16 @@ export default function Modules() {
                     </div>
                 </form>
             </Modal>
+
+            <ConfirmModal
+                open={!!deleteTarget}
+                title='Excluir módulo'
+                message={`Tem certeza que deseja excluir o módulo "${deleteTarget?.name}"? Essa ação não pode ser desfeita.`}
+                loading={deleting}
+                erro={deleteErro}
+                onConfirm={confirmDelete}
+                onClose={() => setDeleteTarget(null)}
+            />
         </>
     )
 }

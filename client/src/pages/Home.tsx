@@ -6,6 +6,7 @@ import { getMe } from '../api/users.ts'
 import Button from '../components/Button.tsx'
 import Logo from '../components/Logo.tsx'
 import Footer from '../components/Footer.tsx'
+import { LogOut } from 'lucide-react'
 
 function moduleLabel(slug: string) {
     return slug
@@ -51,8 +52,14 @@ export default function Home() {
                     >
                         Minha conta
                     </Link>
-                    <Button variant='ghost' onClick={handleLogout} className='text-red-base hover:text-red-light hover:bg-red-base/10'>
-                        Sair
+                    <Button
+                        variant='ghost'
+                        onClick={handleLogout}
+                        aria-label='Sair'
+                        title='Sair'
+                        className='p-2 text-red-base hover:text-red-light hover:bg-red-base/10'
+                    >
+                        <LogOut size={18} />
                     </Button>
                 </div>
             </header>

@@ -3,6 +3,8 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { createSector, deleteSector, getSectors, updateSector, type Sector, type SectorPayload } from '../api/sectors.ts'
 import Button from '../components/Button.tsx'
 import IconButton from '../components/IconButton.tsx'
+import ConfirmModal from '../components/ConfirmModal.tsx'
+import { Pencil, Trash, Plus } from 'lucide-react'
 import Input from '../components/Input.tsx'
 import Select from '../components/Select.tsx'
 import Alert from '../components/Alert.tsx'
@@ -27,6 +29,10 @@ export default function Sectors() {
     const [form, setForm] = useState<FormState>(emptyForm)
     const [salvando, setSalvando] = useState(false)
     const [formErro, setFormErro] = useState('')
+
+    const [deleteTarget, setDeleteTarget] = useState<Sector | null>(null)
+    const [deleting, setDeleting] = useState(false)
+    const [deleteErro, setDeleteErro] = useState('')
 
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active')
@@ -105,16 +111,25 @@ export default function Sectors() {
         }
     }
 
-    async function handleDelete(sector: Sector) {
-        if (!window.confirm(`Excluir o setor ${sector.name}?`)) {
-            return
-        }
+    function handleDelete(sector: Sector) {
+        setDeleteErro('')
+        setDeleteTarget(sector)
+    }
+
+    async function confirmDelete() {
+        if (!deleteTarget) return
+
+        setDeleting(true)
+        setDeleteErro('')
 
         try {
-            await deleteSector(token, sector.id, sector.name)
+            await deleteSector(token, deleteTarget.id, deleteTarget.name)
+            setDeleteTarget(null)
             await loadSectors()
         } catch (error) {
-            setErro(error instanceof Error ? error.message : 'Erro ao excluir setor.')
+            setDeleteErro(error instanceof Error ? error.message : 'Erro ao excluir setor.')
+        } finally {
+            setDeleting(false)
         }
     }
 
@@ -130,7 +145,14 @@ export default function Sectors() {
                     </p>
                 </div>
 
-                <Button onClick={openCreateModal} className='self-start sm:self-auto'>Novo setor</Button>
+                <Button
+                    onClick={openCreateModal}
+                    aria-label='Novo setor'
+                    title='Novo setor'
+                    className='self-start sm:self-auto p-2.5'
+                >
+                    <Plus size={18} />
+                </Button>
             </div>
 
             {erro && (
@@ -206,8 +228,8 @@ export default function Sectors() {
                                     </td>
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
-                                            <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(sector)} />
-                                            <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(sector)} />
+                                            <IconButton icon={<Pencil size={16} />} label='Editar' variant='edit' onClick={() => openEditModal(sector)} />
+                                            <IconButton icon={<Trash size={16} />} label='Excluir' variant='danger' onClick={() => handleDelete(sector)} />
                                         </div>
                                     </td>
                                 </tr>
@@ -252,8 +274,8 @@ export default function Sectors() {
                             </div>
 
                             <div className='flex flex-wrap gap-2'>
-                                <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(sector)} />
-                                <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(sector)} />
+                                <IconButton icon={<Pencil size={16} />} label='Editar' variant='edit' onClick={() => openEditModal(sector)} />
+                                <IconButton icon={<Trash size={16} />} label='Excluir' variant='danger' onClick={() => handleDelete(sector)} />
                             </div>
                         </div>
                     ))
@@ -293,6 +315,16 @@ export default function Sectors() {
                     </div>
                 </form>
             </Modal>
+
+            <ConfirmModal
+                open={!!deleteTarget}
+                title='Excluir setor'
+                message={`Tem certeza que deseja excluir o setor "${deleteTarget?.name}"? Essa ação não pode ser desfeita.`}
+                loading={deleting}
+                erro={deleteErro}
+                onConfirm={confirmDelete}
+                onClose={() => setDeleteTarget(null)}
+            />
         </>
     )
 }
