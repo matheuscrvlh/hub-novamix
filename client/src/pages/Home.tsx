@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.ts'
 import { getModules, type Module } from '../api/modules.ts'
+import { getMe } from '../api/users.ts'
 import Button from '../components/Button.tsx'
 import Logo from '../components/Logo.tsx'
 import Footer from '../components/Footer.tsx'
@@ -17,10 +18,12 @@ export default function Home() {
     const { token, role, permissions, logout } = useAuth()
     const navigate = useNavigate()
     const [modules, setModules] = useState<Module[]>([])
+    const [name, setName] = useState('')
 
     useEffect(() => {
         if (!token) return
         getModules(token).then(setModules).catch(() => {})
+        getMe(token).then((me) => setName(me.name)).catch(() => {})
     }, [token])
 
     function handleLogout() {
@@ -33,22 +36,25 @@ export default function Home() {
 
     return (
         <main className='w-full min-h-screen bg-gray dark:bg-dark-bg flex flex-col'>
-            <header className='w-full bg-white dark:bg-dark-surface shadow-sm flex items-center justify-between px-6'>
+            <header className='w-full bg-white dark:bg-dark-surface shadow-sm flex items-center gap-4 px-6 py-3'>
                 <Logo compact />
 
-                <div className='flex items-center gap-4'>
-                    {role && (
-                        <span className='hidden sm:inline text-sm font-medium text-gray-text dark:text-dark-text'>
-                            {role === 'admin' ? 'Administrador' : 'Usuário'}
+                <div className='flex-1 min-w-0 px-4'>
+                    {name && (
+                        <span className='block truncate text-lg sm:text-xl font-semibold text-gray-text dark:text-dark-text'>
+                            {name}
                         </span>
                     )}
+                </div>
+
+                <div className='flex items-center gap-4 shrink-0'>
                     <Link
                         to='/account'
-                        className='text-sm font-medium text-gray-text dark:text-dark-text hover:text-orange-base transition'
+                        className='text-sm font-medium text-red-base hover:text-red-light transition'
                     >
                         Minha conta
                     </Link>
-                    <Button variant='ghost' onClick={handleLogout}>
+                    <Button variant='ghost' onClick={handleLogout} className='text-red-base hover:text-red-base hover:bg-red-base/10'>
                         Sair
                     </Button>
                 </div>

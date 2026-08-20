@@ -1,8 +1,9 @@
-import { useEffect, useState, type SubmitEvent } from 'react'
+import { useEffect, useMemo, useState, type SubmitEvent } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { createSystem, deleteSystem, getSystems, updateSystem, type System, type SystemPayload } from '../api/systems.ts'
 import Button from '../components/Button.tsx'
 import Input from '../components/Input.tsx'
+import Select from '../components/Select.tsx'
 import Alert from '../components/Alert.tsx'
 import Modal from '../components/Modal.tsx'
 
@@ -26,6 +27,25 @@ export default function Systems() {
     const [form, setForm] = useState<FormState>(emptyForm)
     const [salvando, setSalvando] = useState(false)
     const [formErro, setFormErro] = useState('')
+
+    const [search, setSearch] = useState('')
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active')
+
+    const filteredSystems = useMemo(() => {
+        const term = search.trim().toLowerCase()
+
+        return systems.filter((system) => {
+            if (term && !system.name.toLowerCase().includes(term)) {
+                return false
+            }
+
+            if (statusFilter !== 'all' && system.status !== (statusFilter === 'active')) {
+                return false
+            }
+
+            return true
+        })
+    }, [systems, search, statusFilter])
 
     async function loadSystems() {
         setLoading(true)
@@ -120,6 +140,25 @@ export default function Systems() {
                 </div>
             )}
 
+            <div className='mb-4 flex flex-wrap items-center gap-2'>
+                <Input
+                    placeholder='Buscar por nome'
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className='w-full sm:w-56'
+                />
+
+                <Select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                    className='w-40'
+                >
+                    <option value='all'>Todos os status</option>
+                    <option value='active'>Ativo</option>
+                    <option value='inactive'>Inativo</option>
+                </Select>
+            </div>
+
             <div className='hidden md:block rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border overflow-x-auto'>
                 <table className='w-full text-sm text-left'>
                     <thead>
@@ -143,8 +182,14 @@ export default function Systems() {
                                     Nenhum sistema cadastrado.
                                 </td>
                             </tr>
+                        ) : filteredSystems.length === 0 ? (
+                            <tr>
+                                <td colSpan={4} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
+                                    Nenhum sistema encontrado para os filtros selecionados.
+                                </td>
+                            </tr>
                         ) : (
-                            systems.map((system) => (
+                            filteredSystems.map((system) => (
                                 <tr
                                     key={system.id}
                                     className='border-b last:border-0 border-gray-base/20 dark:border-dark-border text-gray-text dark:text-dark-text'
@@ -164,11 +209,11 @@ export default function Systems() {
                                     </td>
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
-                                            <Button variant='ghost' onClick={() => openEditModal(system)}>
-                                                Editar
+                                            <Button variant='edit' onClick={() => openEditModal(system)}>
+                                                ✏️ Editar
                                             </Button>
                                             <Button variant='danger' onClick={() => handleDelete(system)}>
-                                                Excluir
+                                                🗑️ Excluir
                                             </Button>
                                         </div>
                                     </td>
@@ -188,8 +233,12 @@ export default function Systems() {
                     <p className='px-1 py-6 text-center text-sm text-gray-dark dark:text-dark-text-muted'>
                         Nenhum sistema cadastrado.
                     </p>
+                ) : filteredSystems.length === 0 ? (
+                    <p className='px-1 py-6 text-center text-sm text-gray-dark dark:text-dark-text-muted'>
+                        Nenhum sistema encontrado para os filtros selecionados.
+                    </p>
                 ) : (
-                    systems.map((system) => (
+                    filteredSystems.map((system) => (
                         <div
                             key={system.id}
                             className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border p-4'
@@ -216,11 +265,11 @@ export default function Systems() {
                             )}
 
                             <div className='flex flex-wrap gap-2'>
-                                <Button variant='ghost' onClick={() => openEditModal(system)}>
-                                    Editar
+                                <Button variant='edit' onClick={() => openEditModal(system)}>
+                                    ✏️ Editar
                                 </Button>
                                 <Button variant='danger' onClick={() => handleDelete(system)}>
-                                    Excluir
+                                    🗑️ Excluir
                                 </Button>
                             </div>
                         </div>

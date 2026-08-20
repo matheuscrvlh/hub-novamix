@@ -1,8 +1,9 @@
-import { useEffect, useState, type SubmitEvent } from 'react'
+import { useEffect, useMemo, useState, type SubmitEvent } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { createSector, deleteSector, getSectors, updateSector, type Sector, type SectorPayload } from '../api/sectors.ts'
 import Button from '../components/Button.tsx'
 import Input from '../components/Input.tsx'
+import Select from '../components/Select.tsx'
 import Alert from '../components/Alert.tsx'
 import Modal from '../components/Modal.tsx'
 
@@ -25,6 +26,25 @@ export default function Sectors() {
     const [form, setForm] = useState<FormState>(emptyForm)
     const [salvando, setSalvando] = useState(false)
     const [formErro, setFormErro] = useState('')
+
+    const [search, setSearch] = useState('')
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active')
+
+    const filteredSectors = useMemo(() => {
+        const term = search.trim().toLowerCase()
+
+        return sectors.filter((sector) => {
+            if (term && !sector.name.toLowerCase().includes(term)) {
+                return false
+            }
+
+            if (statusFilter !== 'all' && sector.status !== (statusFilter === 'active')) {
+                return false
+            }
+
+            return true
+        })
+    }, [sectors, search, statusFilter])
 
     async function loadSectors() {
         setLoading(true)
@@ -118,6 +138,25 @@ export default function Sectors() {
                 </div>
             )}
 
+            <div className='mb-4 flex flex-wrap items-center gap-2'>
+                <Input
+                    placeholder='Buscar por nome'
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className='w-full sm:w-56'
+                />
+
+                <Select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                    className='w-40'
+                >
+                    <option value='all'>Todos os status</option>
+                    <option value='active'>Ativo</option>
+                    <option value='inactive'>Inativo</option>
+                </Select>
+            </div>
+
             <div className='hidden md:block rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border overflow-x-auto'>
                 <table className='w-full text-sm text-left'>
                     <thead>
@@ -140,8 +179,14 @@ export default function Sectors() {
                                     Nenhum setor cadastrado.
                                 </td>
                             </tr>
+                        ) : filteredSectors.length === 0 ? (
+                            <tr>
+                                <td colSpan={3} className='px-4 py-6 text-center text-gray-dark dark:text-dark-text-muted'>
+                                    Nenhum setor encontrado para os filtros selecionados.
+                                </td>
+                            </tr>
                         ) : (
-                            sectors.map((sector) => (
+                            filteredSectors.map((sector) => (
                                 <tr
                                     key={sector.id}
                                     className='border-b last:border-0 border-gray-base/20 dark:border-dark-border text-gray-text dark:text-dark-text'
@@ -160,11 +205,11 @@ export default function Sectors() {
                                     </td>
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
-                                            <Button variant='ghost' onClick={() => openEditModal(sector)}>
-                                                Editar
+                                            <Button variant='edit' onClick={() => openEditModal(sector)}>
+                                                ✏️ Editar
                                             </Button>
                                             <Button variant='danger' onClick={() => handleDelete(sector)}>
-                                                Excluir
+                                                🗑️ Excluir
                                             </Button>
                                         </div>
                                     </td>
@@ -184,8 +229,12 @@ export default function Sectors() {
                     <p className='px-1 py-6 text-center text-sm text-gray-dark dark:text-dark-text-muted'>
                         Nenhum setor cadastrado.
                     </p>
+                ) : filteredSectors.length === 0 ? (
+                    <p className='px-1 py-6 text-center text-sm text-gray-dark dark:text-dark-text-muted'>
+                        Nenhum setor encontrado para os filtros selecionados.
+                    </p>
                 ) : (
-                    sectors.map((sector) => (
+                    filteredSectors.map((sector) => (
                         <div
                             key={sector.id}
                             className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border p-4'
@@ -206,11 +255,11 @@ export default function Sectors() {
                             </div>
 
                             <div className='flex flex-wrap gap-2'>
-                                <Button variant='ghost' onClick={() => openEditModal(sector)}>
-                                    Editar
+                                <Button variant='edit' onClick={() => openEditModal(sector)}>
+                                    ✏️ Editar
                                 </Button>
                                 <Button variant='danger' onClick={() => handleDelete(sector)}>
-                                    Excluir
+                                    🗑️ Excluir
                                 </Button>
                             </div>
                         </div>

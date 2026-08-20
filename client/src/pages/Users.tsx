@@ -7,6 +7,7 @@ import { getSystems, type System } from '../api/systems.ts'
 import { getSectors, type Sector } from '../api/sectors.ts'
 import Button from '../components/Button.tsx'
 import Input from '../components/Input.tsx'
+import Select from '../components/Select.tsx'
 import Alert from '../components/Alert.tsx'
 import Modal from '../components/Modal.tsx'
 
@@ -87,12 +88,30 @@ export default function Users() {
     const [systemsErro, setSystemsErro] = useState('')
 
     const [search, setSearch] = useState('')
+    const [filtersOpen, setFiltersOpen] = useState(false)
     const [roleFilter, setRoleFilter] = useState<'all' | UserPayload['role']>('all')
-    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active')
     const [branchFilter, setBranchFilter] = useState<'all' | number>('all')
     const [sectorFilter, setSectorFilter] = useState<'all' | number>('all')
     const [moduleFilter, setModuleFilter] = useState<'all' | number>('all')
     const [moduleAccessFilter, setModuleAccessFilter] = useState<'all' | string>('all')
+
+    const activeFilterCount = [
+        roleFilter !== 'all',
+        statusFilter !== 'all',
+        branchFilter !== 'all',
+        sectorFilter !== 'all',
+        moduleFilter !== 'all'
+    ].filter(Boolean).length
+
+    function clearFilters() {
+        setRoleFilter('all')
+        setStatusFilter('all')
+        setBranchFilter('all')
+        setSectorFilter('all')
+        setModuleFilter('all')
+        setModuleAccessFilter('all')
+    }
 
     const filteredUsers = useMemo(() => {
         const term = search.trim().toLowerCase()
@@ -422,86 +441,139 @@ export default function Users() {
                 </div>
             )}
 
-            <div className='mb-4 flex flex-wrap items-center gap-2'>
-                <Input
-                    placeholder='Buscar por nome ou login'
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className='w-full sm:w-56'
-                />
+            <div className='mb-4'>
+                <div className='flex flex-wrap items-center gap-2'>
+                    <Input
+                        placeholder='Buscar por nome ou login'
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className='w-full sm:w-56'
+                    />
 
-                <select
-                    value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value as typeof roleFilter)}
-                    className='flex-1 min-w-35 sm:flex-none sm:w-auto rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
-                >
-                    <option value='all'>Todos os perfis</option>
-                    <option value='user'>Usuário</option>
-                    <option value='admin'>Administrador</option>
-                </select>
+                    <Button
+                        type='button'
+                        variant='ghost'
+                        onClick={() => setFiltersOpen((open) => !open)}
+                        className='flex items-center gap-1.5 border border-gray-base dark:border-dark-border'
+                    >
+                        Filtros
+                        {activeFilterCount > 0 && (
+                            <span className='inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-base px-1 text-xs font-semibold text-white'>
+                                {activeFilterCount}
+                            </span>
+                        )}
+                        <svg
+                            className={`h-4 w-4 transition-transform ${filtersOpen ? 'rotate-180' : ''}`}
+                            viewBox='0 0 20 20'
+                            fill='none'
+                            stroke='currentColor'
+                            strokeWidth='1.5'
+                        >
+                            <path d='M5 7.5l5 5 5-5' strokeLinecap='round' strokeLinejoin='round' />
+                        </svg>
+                    </Button>
+                </div>
 
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                    className='flex-1 min-w-35 sm:flex-none sm:w-auto rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
-                >
-                    <option value='all'>Todos os status</option>
-                    <option value='active'>Ativo</option>
-                    <option value='inactive'>Inativo</option>
-                </select>
+                {filtersOpen && (
+                    <div className='mt-2 flex flex-wrap items-end gap-3 rounded-xl border border-gray-base/30 bg-white p-3 dark:bg-dark-surface dark:border-dark-border'>
+                        <label className='flex flex-col gap-1 text-xs text-gray-dark dark:text-dark-text-muted'>
+                            Perfil
+                            <Select
+                                value={roleFilter}
+                                onChange={(e) => setRoleFilter(e.target.value as typeof roleFilter)}
+                                className='w-40'
+                            >
+                                <option value='all'>Todos os perfis</option>
+                                <option value='user'>Usuário</option>
+                                <option value='admin'>Administrador</option>
+                            </Select>
+                        </label>
 
-                <select
-                    value={branchFilter}
-                    onChange={(e) => setBranchFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                    className='flex-1 min-w-35 sm:flex-none sm:w-auto rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
-                >
-                    <option value='all'>Todas as filiais</option>
-                    {branchs.map((branch) => (
-                        <option key={branch.id} value={branch.id}>
-                            {branch.name}
-                        </option>
-                    ))}
-                </select>
+                        <label className='flex flex-col gap-1 text-xs text-gray-dark dark:text-dark-text-muted'>
+                            Status
+                            <Select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                                className='w-40'
+                            >
+                                <option value='all'>Todos os status</option>
+                                <option value='active'>Ativo</option>
+                                <option value='inactive'>Inativo</option>
+                            </Select>
+                        </label>
 
-                <select
-                    value={sectorFilter}
-                    onChange={(e) => setSectorFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                    className='flex-1 min-w-35 sm:flex-none sm:w-auto rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
-                >
-                    <option value='all'>Todos os setores</option>
-                    {sectors.map((sector) => (
-                        <option key={sector.id} value={sector.id}>
-                            {sector.name}
-                        </option>
-                    ))}
-                </select>
+                        <label className='flex flex-col gap-1 text-xs text-gray-dark dark:text-dark-text-muted'>
+                            Filial
+                            <Select
+                                value={branchFilter}
+                                onChange={(e) => setBranchFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                                className='w-40'
+                            >
+                                <option value='all'>Todas as filiais</option>
+                                {branchs.map((branch) => (
+                                    <option key={branch.id} value={branch.id}>
+                                        {branch.name}
+                                    </option>
+                                ))}
+                            </Select>
+                        </label>
 
-                <select
-                    value={moduleFilter}
-                    onChange={(e) => {
-                        setModuleFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))
-                        setModuleAccessFilter('all')
-                    }}
-                    className='flex-1 min-w-35 sm:flex-none sm:w-auto rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
-                >
-                    <option value='all'>Todos os módulos</option>
-                    {modules.map((module) => (
-                        <option key={module.id} value={module.id}>
-                            {module.name}
-                        </option>
-                    ))}
-                </select>
+                        <label className='flex flex-col gap-1 text-xs text-gray-dark dark:text-dark-text-muted'>
+                            Setor
+                            <Select
+                                value={sectorFilter}
+                                onChange={(e) => setSectorFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                                className='w-40'
+                            >
+                                <option value='all'>Todos os setores</option>
+                                {sectors.map((sector) => (
+                                    <option key={sector.id} value={sector.id}>
+                                        {sector.name}
+                                    </option>
+                                ))}
+                            </Select>
+                        </label>
 
-                <select
-                    value={moduleAccessFilter}
-                    onChange={(e) => setModuleAccessFilter(e.target.value)}
-                    disabled={moduleFilter === 'all'}
-                    className='rounded-md border border-gray-base bg-white px-3 py-2 text-sm text-gray-text outline-none focus:border-orange-base focus:ring-1 focus:ring-orange-base disabled:opacity-50 dark:border-dark-border dark:bg-dark-surface-2 dark:text-dark-text'
-                >
-                    <option value='all'>Qualquer acesso</option>
-                    <option value='read'>Leitura</option>
-                    <option value='admin'>Admin</option>
-                </select>
+                        <label className='flex flex-col gap-1 text-xs text-gray-dark dark:text-dark-text-muted'>
+                            Módulo
+                            <Select
+                                value={moduleFilter}
+                                onChange={(e) => {
+                                    setModuleFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))
+                                    setModuleAccessFilter('all')
+                                }}
+                                className='w-40'
+                            >
+                                <option value='all'>Todos os módulos</option>
+                                {modules.map((module) => (
+                                    <option key={module.id} value={module.id}>
+                                        {module.name}
+                                    </option>
+                                ))}
+                            </Select>
+                        </label>
+
+                        <label className='flex flex-col gap-1 text-xs text-gray-dark dark:text-dark-text-muted'>
+                            Acesso
+                            <Select
+                                value={moduleAccessFilter}
+                                onChange={(e) => setModuleAccessFilter(e.target.value)}
+                                disabled={moduleFilter === 'all'}
+                                className='w-40'
+                            >
+                                <option value='all'>Qualquer acesso</option>
+                                <option value='read'>Leitura</option>
+                                <option value='admin'>Admin</option>
+                            </Select>
+                        </label>
+
+                        {activeFilterCount > 0 && (
+                            <Button type='button' variant='ghost' onClick={clearFilters} className='text-orange-base'>
+                                Limpar filtros
+                            </Button>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className='hidden md:block rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border overflow-x-auto'>
@@ -559,37 +631,41 @@ export default function Users() {
                                         </span>
                                     </td>
                                     <td className='px-4 py-3'>
-                                        <div className='flex flex-wrap items-center justify-end gap-2'>
-                                            <Button variant='ghost' className='whitespace-nowrap' onClick={() => openPermissionsModal(user)}>
-                                                Permissões
-                                                {user.permissions.length > 0 && (
-                                                    <span className='ml-1 text-orange-base'>
-                                                        ({user.permissions.length})
-                                                    </span>
-                                                )}
-                                            </Button>
-                                            <Button variant='ghost' className='whitespace-nowrap' onClick={() => openBranchsModal(user)}>
-                                                Filiais
-                                                {user.branchs.length > 0 && (
-                                                    <span className='ml-1 text-orange-base'>
-                                                        ({user.branchs.length})
-                                                    </span>
-                                                )}
-                                            </Button>
-                                            <Button variant='ghost' className='whitespace-nowrap' onClick={() => openSystemsModal(user)}>
-                                                Sistemas
-                                                {user.systems.length > 0 && (
-                                                    <span className='ml-1 text-orange-base'>
-                                                        ({user.systems.length})
-                                                    </span>
-                                                )}
-                                            </Button>
-                                            <Button variant='ghost' className='whitespace-nowrap' onClick={() => openEditModal(user)}>
-                                                Editar
-                                            </Button>
-                                            <Button variant='danger' className='whitespace-nowrap' onClick={() => handleDelete(user)}>
-                                                Excluir
-                                            </Button>
+                                        <div className='flex flex-wrap items-center justify-end gap-4'>
+                                            <div className='flex flex-wrap items-center gap-2'>
+                                                <Button variant='permission' className='whitespace-nowrap' onClick={() => openPermissionsModal(user)}>
+                                                    🔐 Permissões
+                                                    {user.permissions.length > 0 && (
+                                                        <span className='ml-1 font-semibold'>
+                                                            ({user.permissions.length})
+                                                        </span>
+                                                    )}
+                                                </Button>
+                                                <Button variant='branch' className='whitespace-nowrap' onClick={() => openBranchsModal(user)}>
+                                                    🏬 Filiais
+                                                    {user.branchs.length > 0 && (
+                                                        <span className='ml-1 font-semibold'>
+                                                            ({user.branchs.length})
+                                                        </span>
+                                                    )}
+                                                </Button>
+                                                <Button variant='system' className='whitespace-nowrap' onClick={() => openSystemsModal(user)}>
+                                                    💻 Sistemas
+                                                    {user.systems.length > 0 && (
+                                                        <span className='ml-1 font-semibold'>
+                                                            ({user.systems.length})
+                                                        </span>
+                                                    )}
+                                                </Button>
+                                            </div>
+                                            <div className='flex flex-wrap items-center gap-2'>
+                                                <Button variant='edit' className='whitespace-nowrap' onClick={() => openEditModal(user)}>
+                                                    ✏️ Editar
+                                                </Button>
+                                                <Button variant='danger' className='whitespace-nowrap' onClick={() => handleDelete(user)}>
+                                                    🗑️ Excluir
+                                                </Button>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -652,36 +728,36 @@ export default function Users() {
                                 </div>
                             </dl>
 
-                            <div className='flex flex-wrap gap-2'>
-                                <Button variant='ghost' onClick={() => openPermissionsModal(user)}>
-                                    Permissões
+                            <div className='flex flex-wrap items-center gap-2'>
+                                <Button variant='permission' onClick={() => openPermissionsModal(user)}>
+                                    🔐 Permissões
                                     {user.permissions.length > 0 && (
-                                        <span className='ml-1 text-orange-base'>
+                                        <span className='ml-1 font-semibold'>
                                             ({user.permissions.length})
                                         </span>
                                     )}
                                 </Button>
-                                <Button variant='ghost' onClick={() => openBranchsModal(user)}>
-                                    Filiais
+                                <Button variant='branch' onClick={() => openBranchsModal(user)}>
+                                    🏬 Filiais
                                     {user.branchs.length > 0 && (
-                                        <span className='ml-1 text-orange-base'>
+                                        <span className='ml-1 font-semibold'>
                                             ({user.branchs.length})
                                         </span>
                                     )}
                                 </Button>
-                                <Button variant='ghost' onClick={() => openSystemsModal(user)}>
-                                    Sistemas
+                                <Button variant='system' onClick={() => openSystemsModal(user)}>
+                                    💻 Sistemas
                                     {user.systems.length > 0 && (
-                                        <span className='ml-1 text-orange-base'>
+                                        <span className='ml-1 font-semibold'>
                                             ({user.systems.length})
                                         </span>
                                     )}
                                 </Button>
-                                <Button variant='ghost' onClick={() => openEditModal(user)}>
-                                    Editar
+                                <Button variant='edit' onClick={() => openEditModal(user)}>
+                                    ✏️ Editar
                                 </Button>
                                 <Button variant='danger' onClick={() => handleDelete(user)}>
-                                    Excluir
+                                    🗑️ Excluir
                                 </Button>
                             </div>
                         </div>
