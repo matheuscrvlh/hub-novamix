@@ -2,6 +2,7 @@ import { useEffect, useState, type SubmitEvent } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { createBranch, deleteBranch, getBranchs, updateBranch, type Branch, type BranchPayload } from '../api/branchs.ts'
 import Button from '../components/Button.tsx'
+import IconButton from '../components/IconButton.tsx'
 import Input from '../components/Input.tsx'
 import Alert from '../components/Alert.tsx'
 import Modal from '../components/Modal.tsx'
@@ -160,12 +161,8 @@ export default function Branchs() {
                                     </td>
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
-                                            <Button variant='ghost' onClick={() => openEditModal(branch)}>
-                                                Editar
-                                            </Button>
-                                            <Button variant='danger' onClick={() => handleDelete(branch)}>
-                                                Excluir
-                                            </Button>
+                                            <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(branch)} />
+                                            <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(branch)} />
                                         </div>
                                     </td>
                                 </tr>
@@ -206,12 +203,8 @@ export default function Branchs() {
                             </div>
 
                             <div className='flex flex-wrap gap-2'>
-                                <Button variant='ghost' onClick={() => openEditModal(branch)}>
-                                    Editar
-                                </Button>
-                                <Button variant='danger' onClick={() => handleDelete(branch)}>
-                                    Excluir
-                                </Button>
+                                <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(branch)} />
+                                <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(branch)} />
                             </div>
                         </div>
                     ))

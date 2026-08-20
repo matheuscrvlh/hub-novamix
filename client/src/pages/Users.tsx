@@ -634,14 +634,14 @@ export default function Users() {
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
                                             <IconButton
-                                                icon='🔐'
+                                                icon='🔒'
                                                 label='Permissões'
                                                 variant='permission'
                                                 count={user.permissions.length}
                                                 onClick={() => openPermissionsModal(user)}
                                             />
                                             <IconButton
-                                                icon='🏬'
+                                                icon='🏢'
                                                 label='Filiais'
                                                 variant='branch'
                                                 count={user.branchs.length}
@@ -720,14 +720,14 @@ export default function Users() {
 
                             <div className='flex flex-wrap items-center gap-2'>
                                 <IconButton
-                                    icon='🔐'
+                                    icon='🔒'
                                     label='Permissões'
                                     variant='permission'
                                     count={user.permissions.length}
                                     onClick={() => openPermissionsModal(user)}
                                 />
                                 <IconButton
-                                    icon='🏬'
+                                    icon='🏢'
                                     label='Filiais'
                                     variant='branch'
                                     count={user.branchs.length}
