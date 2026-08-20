@@ -36,25 +36,22 @@ export default function Home() {
 
     return (
         <main className='w-full min-h-screen bg-gray dark:bg-dark-bg flex flex-col'>
-            <header className='w-full bg-white dark:bg-dark-surface shadow-sm flex items-center gap-4 px-6 py-3'>
+            <header className='w-full bg-white dark:bg-dark-surface shadow-sm flex items-center justify-between px-6'>
                 <Logo compact />
 
-                <div className='flex-1 min-w-0 px-4'>
+                <div className='flex items-center gap-4'>
                     {name && (
-                        <span className='block truncate text-lg sm:text-xl font-semibold text-gray-text dark:text-dark-text'>
+                        <span className='hidden sm:inline text-sm font-medium text-gray-text dark:text-dark-text'>
                             {name}
                         </span>
                     )}
-                </div>
-
-                <div className='flex items-center gap-4 shrink-0'>
                     <Link
                         to='/account'
-                        className='text-sm font-medium text-red-base hover:text-red-light transition'
+                        className='text-sm font-medium text-orange-base hover:text-orange-light transition'
                     >
                         Minha conta
                     </Link>
-                    <Button variant='ghost' onClick={handleLogout} className='text-red-base hover:text-red-base hover:bg-red-base/10'>
+                    <Button variant='ghost' onClick={handleLogout} className='text-red-base hover:text-red-light hover:bg-red-base/10'>
                         Sair
                     </Button>
                 </div>

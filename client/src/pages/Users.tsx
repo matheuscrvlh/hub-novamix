@@ -6,6 +6,7 @@ import { getBranchs, type Branch } from '../api/branchs.ts'
 import { getSystems, type System } from '../api/systems.ts'
 import { getSectors, type Sector } from '../api/sectors.ts'
 import Button from '../components/Button.tsx'
+import IconButton from '../components/IconButton.tsx'
 import Input from '../components/Input.tsx'
 import Select from '../components/Select.tsx'
 import Alert from '../components/Alert.tsx'
@@ -631,41 +632,30 @@ export default function Users() {
                                         </span>
                                     </td>
                                     <td className='px-4 py-3'>
-                                        <div className='flex flex-wrap items-center justify-end gap-4'>
-                                            <div className='flex flex-wrap items-center gap-2'>
-                                                <Button variant='permission' className='whitespace-nowrap' onClick={() => openPermissionsModal(user)}>
-                                                    🔐 Permissões
-                                                    {user.permissions.length > 0 && (
-                                                        <span className='ml-1 font-semibold'>
-                                                            ({user.permissions.length})
-                                                        </span>
-                                                    )}
-                                                </Button>
-                                                <Button variant='branch' className='whitespace-nowrap' onClick={() => openBranchsModal(user)}>
-                                                    🏬 Filiais
-                                                    {user.branchs.length > 0 && (
-                                                        <span className='ml-1 font-semibold'>
-                                                            ({user.branchs.length})
-                                                        </span>
-                                                    )}
-                                                </Button>
-                                                <Button variant='system' className='whitespace-nowrap' onClick={() => openSystemsModal(user)}>
-                                                    💻 Sistemas
-                                                    {user.systems.length > 0 && (
-                                                        <span className='ml-1 font-semibold'>
-                                                            ({user.systems.length})
-                                                        </span>
-                                                    )}
-                                                </Button>
-                                            </div>
-                                            <div className='flex flex-wrap items-center gap-2'>
-                                                <Button variant='edit' className='whitespace-nowrap' onClick={() => openEditModal(user)}>
-                                                    ✏️ Editar
-                                                </Button>
-                                                <Button variant='danger' className='whitespace-nowrap' onClick={() => handleDelete(user)}>
-                                                    🗑️ Excluir
-                                                </Button>
-                                            </div>
+                                        <div className='flex items-center justify-end gap-2'>
+                                            <IconButton
+                                                icon='🔐'
+                                                label='Permissões'
+                                                variant='permission'
+                                                count={user.permissions.length}
+                                                onClick={() => openPermissionsModal(user)}
+                                            />
+                                            <IconButton
+                                                icon='🏬'
+                                                label='Filiais'
+                                                variant='branch'
+                                                count={user.branchs.length}
+                                                onClick={() => openBranchsModal(user)}
+                                            />
+                                            <IconButton
+                                                icon='💻'
+                                                label='Sistemas'
+                                                variant='system'
+                                                count={user.systems.length}
+                                                onClick={() => openSystemsModal(user)}
+                                            />
+                                            <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(user)} />
+                                            <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(user)} />
                                         </div>
                                     </td>
                                 </tr>
@@ -729,36 +719,29 @@ export default function Users() {
                             </dl>
 
                             <div className='flex flex-wrap items-center gap-2'>
-                                <Button variant='permission' onClick={() => openPermissionsModal(user)}>
-                                    🔐 Permissões
-                                    {user.permissions.length > 0 && (
-                                        <span className='ml-1 font-semibold'>
-                                            ({user.permissions.length})
-                                        </span>
-                                    )}
-                                </Button>
-                                <Button variant='branch' onClick={() => openBranchsModal(user)}>
-                                    🏬 Filiais
-                                    {user.branchs.length > 0 && (
-                                        <span className='ml-1 font-semibold'>
-                                            ({user.branchs.length})
-                                        </span>
-                                    )}
-                                </Button>
-                                <Button variant='system' onClick={() => openSystemsModal(user)}>
-                                    💻 Sistemas
-                                    {user.systems.length > 0 && (
-                                        <span className='ml-1 font-semibold'>
-                                            ({user.systems.length})
-                                        </span>
-                                    )}
-                                </Button>
-                                <Button variant='edit' onClick={() => openEditModal(user)}>
-                                    ✏️ Editar
-                                </Button>
-                                <Button variant='danger' onClick={() => handleDelete(user)}>
-                                    🗑️ Excluir
-                                </Button>
+                                <IconButton
+                                    icon='🔐'
+                                    label='Permissões'
+                                    variant='permission'
+                                    count={user.permissions.length}
+                                    onClick={() => openPermissionsModal(user)}
+                                />
+                                <IconButton
+                                    icon='🏬'
+                                    label='Filiais'
+                                    variant='branch'
+                                    count={user.branchs.length}
+                                    onClick={() => openBranchsModal(user)}
+                                />
+                                <IconButton
+                                    icon='💻'
+                                    label='Sistemas'
+                                    variant='system'
+                                    count={user.systems.length}
+                                    onClick={() => openSystemsModal(user)}
+                                />
+                                <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(user)} />
+                                <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(user)} />
                             </div>
                         </div>
                     ))

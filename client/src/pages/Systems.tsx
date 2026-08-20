@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type SubmitEvent } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { createSystem, deleteSystem, getSystems, updateSystem, type System, type SystemPayload } from '../api/systems.ts'
 import Button from '../components/Button.tsx'
+import IconButton from '../components/IconButton.tsx'
 import Input from '../components/Input.tsx'
 import Select from '../components/Select.tsx'
 import Alert from '../components/Alert.tsx'
@@ -209,12 +210,8 @@ export default function Systems() {
                                     </td>
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
-                                            <Button variant='edit' onClick={() => openEditModal(system)}>
-                                                ✏️ Editar
-                                            </Button>
-                                            <Button variant='danger' onClick={() => handleDelete(system)}>
-                                                🗑️ Excluir
-                                            </Button>
+                                            <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(system)} />
+                                            <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(system)} />
                                         </div>
                                     </td>
                                 </tr>
@@ -265,12 +262,8 @@ export default function Systems() {
                             )}
 
                             <div className='flex flex-wrap gap-2'>
-                                <Button variant='edit' onClick={() => openEditModal(system)}>
-                                    ✏️ Editar
-                                </Button>
-                                <Button variant='danger' onClick={() => handleDelete(system)}>
-                                    🗑️ Excluir
-                                </Button>
+                                <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(system)} />
+                                <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(system)} />
                             </div>
                         </div>
                     ))

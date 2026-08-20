@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type SubmitEvent } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { createSector, deleteSector, getSectors, updateSector, type Sector, type SectorPayload } from '../api/sectors.ts'
 import Button from '../components/Button.tsx'
+import IconButton from '../components/IconButton.tsx'
 import Input from '../components/Input.tsx'
 import Select from '../components/Select.tsx'
 import Alert from '../components/Alert.tsx'
@@ -205,12 +206,8 @@ export default function Sectors() {
                                     </td>
                                     <td className='px-4 py-3'>
                                         <div className='flex items-center justify-end gap-2'>
-                                            <Button variant='edit' onClick={() => openEditModal(sector)}>
-                                                ✏️ Editar
-                                            </Button>
-                                            <Button variant='danger' onClick={() => handleDelete(sector)}>
-                                                🗑️ Excluir
-                                            </Button>
+                                            <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(sector)} />
+                                            <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(sector)} />
                                         </div>
                                     </td>
                                 </tr>
@@ -255,12 +252,8 @@ export default function Sectors() {
                             </div>
 
                             <div className='flex flex-wrap gap-2'>
-                                <Button variant='edit' onClick={() => openEditModal(sector)}>
-                                    ✏️ Editar
-                                </Button>
-                                <Button variant='danger' onClick={() => handleDelete(sector)}>
-                                    🗑️ Excluir
-                                </Button>
+                                <IconButton icon='✏️' label='Editar' variant='edit' onClick={() => openEditModal(sector)} />
+                                <IconButton icon='🗑️' label='Excluir' variant='danger' onClick={() => handleDelete(sector)} />
                             </div>
                         </div>
                     ))
