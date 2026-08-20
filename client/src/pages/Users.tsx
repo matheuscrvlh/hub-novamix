@@ -11,6 +11,7 @@ import ConfirmModal from '../components/ConfirmModal.tsx'
 import { Pencil, Trash, Plus, Store, UserKey, Grip, ShieldCheck, Check } from 'lucide-react'
 import Input from '../components/Input.tsx'
 import Select from '../components/Select.tsx'
+import Switch from '../components/Switch.tsx'
 import Alert from '../components/Alert.tsx'
 import Modal from '../components/Modal.tsx'
 
@@ -771,23 +772,26 @@ export default function Users() {
             </div>
 
             <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Editar usuário' : 'Novo usuário'}>
-                <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
-                    <Input
-                        placeholder='Nome'
-                        value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        required
-                        alwaysLight
-                        autoComplete='off'
-                    />
-                    <Input
-                        placeholder='Login'
-                        value={form.login}
-                        onChange={(e) => setForm({ ...form, login: e.target.value })}
-                        required
-                        alwaysLight
-                        autoComplete='off'
-                    />
+                <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                        <Input
+                            placeholder='Nome'
+                            value={form.name}
+                            onChange={(e) => setForm({ ...form, name: e.target.value })}
+                            required
+                            alwaysLight
+                            autoComplete='off'
+                        />
+                        <Input
+                            placeholder='Login'
+                            value={form.login}
+                            onChange={(e) => setForm({ ...form, login: e.target.value })}
+                            required
+                            alwaysLight
+                            autoComplete='off'
+                        />
+                    </div>
+
                     <Input
                         type='password'
                         placeholder={editingId ? 'Nova senha (deixe em branco para manter)' : 'Senha'}
@@ -802,6 +806,7 @@ export default function Users() {
                         value={form.sector_id ?? ''}
                         onChange={(e) => setForm({ ...form, sector_id: e.target.value ? Number(e.target.value) : null })}
                         alwaysLight
+                        className='w-full'
                     >
                         <option value=''>Sem setor</option>
                         {sectors.map((sector) => (
@@ -811,14 +816,11 @@ export default function Users() {
                         ))}
                     </Select>
 
-                    <label className='flex items-center gap-2 text-sm text-gray-text'>
-                        <input
-                            type='checkbox'
-                            checked={form.status}
-                            onChange={(e) => setForm({ ...form, status: e.target.checked })}
-                        />
-                        Usuário ativo
-                    </label>
+                    <Switch
+                        checked={form.status}
+                        onChange={(status) => setForm({ ...form, status })}
+                        label='Usuário ativo'
+                    />
 
                     {formErro && <Alert>{formErro}</Alert>}
 
@@ -836,9 +838,15 @@ export default function Users() {
             <Modal
                 open={permissionsModalOpen}
                 onClose={closePermissionsModal}
-                title={permissionsTarget ? `Permissões de ${permissionsTarget.name}` : 'Permissões'}
+                title='Permissões'
             >
                 <form onSubmit={handleSavePermissions} className='flex flex-col gap-5'>
+                    {permissionsTarget && (
+                        <p className='-mt-2 text-sm text-gray-dark dark:text-dark-text-muted'>
+                            Usuário: <span className='font-medium text-gray-text dark:text-dark-text'>{permissionsTarget.name}</span>
+                        </p>
+                    )}
+
                     <div className='rounded-lg border border-blue-base/30 bg-blue-base/5 p-4'>
                         <div className='flex items-center gap-2 mb-1'>
                             <ShieldCheck size={16} className='text-blue-base shrink-0' />
@@ -853,6 +861,7 @@ export default function Users() {
                                 setPermissionsForm((prev) => ({ ...prev, role: e.target.value as UserPayload['role'] }))
                             }
                             alwaysLight
+                            className='w-full'
                         >
                             <option value='user'>Usuário</option>
                             <option value='admin'>Administrador</option>
@@ -936,15 +945,21 @@ export default function Users() {
             <Modal
                 open={branchsModalOpen}
                 onClose={closeBranchsModal}
-                title={branchsTarget ? `Filiais de ${branchsTarget.name}` : 'Filiais'}
+                title='Filiais'
             >
                 <form onSubmit={handleSaveBranchs} className='flex flex-col gap-4'>
+                    {branchsTarget && (
+                        <p className='-mt-2 text-sm text-gray-dark dark:text-dark-text-muted'>
+                            Usuário: <span className='font-medium text-gray-text dark:text-dark-text'>{branchsTarget.name}</span>
+                        </p>
+                    )}
+
                     <div>
                         <p className='text-sm font-medium text-gray-text mb-2'>Filiais liberadas</p>
                         {branchs.length === 0 ? (
                             <p className='text-sm text-gray-dark'>Nenhuma filial cadastrada.</p>
                         ) : (
-                            <div className='grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1'>
+                            <div className='flex flex-col gap-2 max-h-64 overflow-y-auto pr-1'>
                                 {branchs.map((branch) => {
                                     const checked = branchsForm.branchsIds.includes(branch.id)
 
@@ -990,10 +1005,16 @@ export default function Users() {
             <Modal
                 open={systemsModalOpen}
                 onClose={closeSystemsModal}
-                title={systemsTarget ? `Sistemas de ${systemsTarget.name}` : 'Sistemas'}
+                title='Sistemas'
                 maxWidthClassName='max-w-lg'
             >
                 <form onSubmit={handleSaveSystems} className='flex flex-col gap-4'>
+                    {systemsTarget && (
+                        <p className='-mt-2 text-sm text-gray-dark dark:text-dark-text-muted'>
+                            Usuário: <span className='font-medium text-gray-text dark:text-dark-text'>{systemsTarget.name}</span>
+                        </p>
+                    )}
+
                     <div>
                         <p className='text-sm font-medium text-gray-text mb-2'>
                             Sistemas vinculados e login/senha do usuário em cada um

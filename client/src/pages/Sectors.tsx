@@ -7,6 +7,7 @@ import ConfirmModal from '../components/ConfirmModal.tsx'
 import { Pencil, Trash, Plus } from 'lucide-react'
 import Input from '../components/Input.tsx'
 import Select from '../components/Select.tsx'
+import Switch from '../components/Switch.tsx'
 import Alert from '../components/Alert.tsx'
 import Modal from '../components/Modal.tsx'
 
@@ -283,7 +284,7 @@ export default function Sectors() {
             </div>
 
             <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Editar setor' : 'Novo setor'}>
-                <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
+                <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
                     <Input
                         placeholder='Nome'
                         value={form.name}
@@ -293,14 +294,11 @@ export default function Sectors() {
                     />
 
                     {editingId && (
-                        <label className='flex items-center gap-2 text-sm text-gray-text'>
-                            <input
-                                type='checkbox'
-                                checked={form.status}
-                                onChange={(e) => setForm({ ...form, status: e.target.checked })}
-                            />
-                            Setor ativo
-                        </label>
+                        <Switch
+                            checked={form.status}
+                            onChange={(status) => setForm({ ...form, status })}
+                            label='Setor ativo'
+                        />
                     )}
 
                     {formErro && <Alert>{formErro}</Alert>}

@@ -7,6 +7,7 @@ import ConfirmModal from '../components/ConfirmModal.tsx'
 import { Pencil, Trash, Plus } from 'lucide-react'
 import Input from '../components/Input.tsx'
 import Select from '../components/Select.tsx'
+import Switch from '../components/Switch.tsx'
 import Alert from '../components/Alert.tsx'
 import Modal from '../components/Modal.tsx'
 
@@ -293,30 +294,29 @@ export default function Systems() {
             </div>
 
             <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Editar sistema' : 'Novo sistema'}>
-                <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
-                    <Input
-                        placeholder='Nome'
-                        value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        required
-                        alwaysLight
-                    />
-                    <Input
-                        placeholder='Link'
-                        value={form.link}
-                        onChange={(e) => setForm({ ...form, link: e.target.value })}
-                        alwaysLight
-                    />
+                <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                        <Input
+                            placeholder='Nome'
+                            value={form.name}
+                            onChange={(e) => setForm({ ...form, name: e.target.value })}
+                            required
+                            alwaysLight
+                        />
+                        <Input
+                            placeholder='Link'
+                            value={form.link}
+                            onChange={(e) => setForm({ ...form, link: e.target.value })}
+                            alwaysLight
+                        />
+                    </div>
 
                     {editingId && (
-                        <label className='flex items-center gap-2 text-sm text-gray-text'>
-                            <input
-                                type='checkbox'
-                                checked={form.status}
-                                onChange={(e) => setForm({ ...form, status: e.target.checked })}
-                            />
-                            Sistema ativo
-                        </label>
+                        <Switch
+                            checked={form.status}
+                            onChange={(status) => setForm({ ...form, status })}
+                            label='Sistema ativo'
+                        />
                     )}
 
                     {formErro && <Alert>{formErro}</Alert>}

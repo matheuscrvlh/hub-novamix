@@ -7,6 +7,7 @@ import Input from '../components/Input.tsx'
 import Alert from '../components/Alert.tsx'
 import Logo from '../components/Logo.tsx'
 import Footer from '../components/Footer.tsx'
+import { LogOut, Eye, EyeOff } from 'lucide-react'
 
 type FormState = {
     name: string
@@ -16,11 +17,23 @@ type FormState = {
 
 const emptyForm: FormState = { name: '', login: '', password: '' }
 
+function getInitials(name: string) {
+    const initials = name
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((word) => word[0]?.toUpperCase())
+        .join('')
+
+    return initials || '?'
+}
+
 export default function Account() {
     const { token, logout } = useAuth()
     const navigate = useNavigate()
 
-    const [, setMe] = useState<Me | null>(null)
+    const [me, setMe] = useState<Me | null>(null)
     const [loading, setLoading] = useState(true)
     const [erro, setErro] = useState('')
 
@@ -115,19 +128,32 @@ export default function Account() {
                     >
                         ← Voltar
                     </button>
-                    <Button variant='ghost' onClick={handleLogout} className='px-2 sm:px-4'>
-                        Sair
+                    <Button
+                        variant='ghost'
+                        onClick={handleLogout}
+                        aria-label='Sair'
+                        title='Sair'
+                        className='p-2 text-red-base hover:text-red-light hover:bg-red-base/10'
+                    >
+                        <LogOut size={18} />
                     </Button>
                 </div>
             </header>
 
-            <section className='flex-1 w-full max-w-md mx-auto px-4 py-6 sm:px-6 sm:py-10'>
-                <h1 className='text-2xl font-semibold text-gray-text dark:text-dark-text mb-1'>
-                    Minha conta
-                </h1>
-                <p className='text-sm text-gray-dark dark:text-dark-text-muted mb-8'>
-                    Atualize as informações da sua conta.
-                </p>
+            <section className='flex-1 w-full max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-10'>
+                <div className='flex items-center gap-4 mb-8'>
+                    <div className='flex h-14 w-14 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-full bg-orange-base text-white text-lg sm:text-xl font-semibold'>
+                        {getInitials(me?.name ?? '')}
+                    </div>
+                    <div className='min-w-0'>
+                        <h1 className='text-xl sm:text-2xl font-semibold text-gray-text dark:text-dark-text truncate'>
+                            {me?.name || 'Minha conta'}
+                        </h1>
+                        <p className='text-sm text-gray-dark dark:text-dark-text-muted truncate'>
+                            {me?.login ?? 'Atualize as informações da sua conta'}
+                        </p>
+                    </div>
+                </div>
 
                 {erro && (
                     <div className='mb-4'>
@@ -135,117 +161,128 @@ export default function Account() {
                     </div>
                 )}
 
-                {loading ? (
-                    <p className='text-sm text-gray-dark dark:text-dark-text-muted'>Carregando...</p>
-                ) : (
-                    <form
-                        onSubmit={handleSubmit}
-                        className='flex flex-col gap-3 rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border p-6'
-                    >
-                        <Input
-                            placeholder='Nome'
-                            value={form.name}
-                            onChange={(e) => setForm({ ...form, name: e.target.value })}
-                            required
-                            alwaysLight
-                        />
-                        <Input
-                            placeholder='Login'
-                            value={form.login}
-                            onChange={(e) => setForm({ ...form, login: e.target.value })}
-                            required
-                            alwaysLight
-                            autoComplete='off'
-                        />
-                        <Input
-                            type='password'
-                            placeholder='Nova senha (deixe em branco para manter)'
-                            value={form.password}
-                            onChange={(e) => setForm({ ...form, password: e.target.value })}
-                            alwaysLight
-                            autoComplete='new-password'
-                        />
+                <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 items-start'>
+                    <div className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border p-6'>
+                        <h2 className='text-sm font-semibold uppercase tracking-wide text-gray-dark dark:text-dark-text-muted mb-4'>
+                            Dados da conta
+                        </h2>
 
-                        {formErro && <Alert>{formErro}</Alert>}
-                        {sucesso && <Alert variant='info'>{sucesso}</Alert>}
+                        {loading ? (
+                            <p className='text-sm text-gray-dark dark:text-dark-text-muted'>Carregando...</p>
+                        ) : (
+                            <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
+                                <Input
+                                    placeholder='Nome'
+                                    value={form.name}
+                                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                    required
+                                    alwaysLight
+                                />
+                                <Input
+                                    placeholder='Login'
+                                    value={form.login}
+                                    onChange={(e) => setForm({ ...form, login: e.target.value })}
+                                    required
+                                    alwaysLight
+                                    autoComplete='off'
+                                />
+                                <Input
+                                    type='password'
+                                    placeholder='Nova senha (deixe em branco para manter)'
+                                    value={form.password}
+                                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                                    alwaysLight
+                                    autoComplete='new-password'
+                                />
 
-                        <div className='flex items-center justify-end gap-2 mt-2'>
-                            <Button type='submit' disabled={salvando}>
-                                {salvando ? 'Salvando...' : 'Salvar'}
-                            </Button>
-                        </div>
-                    </form>
-                )}
-            </section>
+                                {formErro && <Alert>{formErro}</Alert>}
+                                {sucesso && <Alert variant='info'>{sucesso}</Alert>}
 
-            <section className='w-full max-w-2xl mx-auto px-4 pb-10 sm:px-6'>
-                <h2 className='text-xl font-semibold text-gray-text dark:text-dark-text mb-1'>
-                    Meus sistemas
-                </h2>
-                <p className='text-sm text-gray-dark dark:text-dark-text-muted mb-4'>
-                    Login e senha cadastrados para você em cada sistema.
-                </p>
-
-                {systemsErro && (
-                    <div className='mb-4'>
-                        <Alert>{systemsErro}</Alert>
+                                <div className='flex items-center justify-end gap-2 mt-2'>
+                                    <Button type='submit' disabled={salvando}>
+                                        {salvando ? 'Salvando...' : 'Salvar'}
+                                    </Button>
+                                </div>
+                            </form>
+                        )}
                     </div>
-                )}
 
-                {systemsLoading ? (
-                    <p className='text-sm text-gray-dark dark:text-dark-text-muted'>Carregando...</p>
-                ) : systems.length === 0 ? (
-                    <p className='text-sm text-gray-dark dark:text-dark-text-muted'>
-                        Nenhum sistema vinculado à sua conta.
-                    </p>
-                ) : (
-                    <div className='flex flex-col gap-3'>
-                        {systems.map((system) => (
-                            <div
-                                key={system.system_id}
-                                className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border p-4'
-                            >
-                                <div className='flex items-center justify-between gap-2 mb-2'>
-                                    <p className='min-w-0 truncate text-sm font-semibold text-gray-text dark:text-dark-text'>
-                                        {system.system_name}
-                                    </p>
-                                    {system.link && (
-                                        <a
-                                            href={system.link}
-                                            target='_blank'
-                                            rel='noreferrer'
-                                            className='shrink-0 text-xs font-medium text-orange-base hover:underline'
-                                        >
-                                            Acessar
-                                        </a>
-                                    )}
-                                </div>
+                    <div className='rounded-xl border border-gray-base/30 bg-white dark:bg-dark-surface dark:border-dark-border p-6'>
+                        <h2 className='text-sm font-semibold uppercase tracking-wide text-gray-dark dark:text-dark-text-muted mb-1'>
+                            Meus sistemas
+                        </h2>
+                        <p className='text-xs text-gray-dark dark:text-dark-text-muted mb-4'>
+                            Login e senha cadastrados para você em cada sistema.
+                        </p>
 
-                                <div className='flex flex-col gap-1 text-sm text-gray-text dark:text-dark-text'>
-                                    <p className='break-all'>
-                                        <span className='text-gray-dark dark:text-dark-text-muted'>Login: </span>
-                                        {system.user_login}
-                                    </p>
-                                    <p className='flex flex-wrap items-center gap-2'>
-                                        <span className='text-gray-dark dark:text-dark-text-muted'>Senha: </span>
-                                        <span className='break-all'>
-                                            {visiblePasswords.includes(system.system_id)
-                                                ? system.user_password
-                                                : '••••••••'}
-                                        </span>
-                                        <button
-                                            type='button'
-                                            onClick={() => togglePasswordVisibility(system.system_id)}
-                                            className='text-xs font-medium text-orange-base hover:underline'
-                                        >
-                                            {visiblePasswords.includes(system.system_id) ? 'Ocultar' : 'Mostrar'}
-                                        </button>
-                                    </p>
-                                </div>
+                        {systemsErro && (
+                            <div className='mb-4'>
+                                <Alert>{systemsErro}</Alert>
                             </div>
-                        ))}
+                        )}
+
+                        {systemsLoading ? (
+                            <p className='text-sm text-gray-dark dark:text-dark-text-muted'>Carregando...</p>
+                        ) : systems.length === 0 ? (
+                            <p className='text-sm text-gray-dark dark:text-dark-text-muted'>
+                                Nenhum sistema vinculado à sua conta.
+                            </p>
+                        ) : (
+                            <div className='flex flex-col gap-3 max-h-112 overflow-y-auto pr-1'>
+                                {systems.map((system) => (
+                                    <div
+                                        key={system.system_id}
+                                        className='rounded-lg border border-gray-base/20 dark:border-dark-border bg-gray/40 dark:bg-dark-surface-2 p-4'
+                                    >
+                                        <div className='flex items-center justify-between gap-2 mb-2'>
+                                            <p className='min-w-0 truncate text-sm font-semibold text-gray-text dark:text-dark-text'>
+                                                {system.system_name}
+                                            </p>
+                                            {system.link && (
+                                                <a
+                                                    href={system.link}
+                                                    target='_blank'
+                                                    rel='noreferrer'
+                                                    className='shrink-0 text-xs font-medium text-orange-base hover:underline'
+                                                >
+                                                    Acessar
+                                                </a>
+                                            )}
+                                        </div>
+
+                                        <div className='flex flex-col gap-1 text-sm text-gray-text dark:text-dark-text'>
+                                            <p className='break-all'>
+                                                <span className='text-gray-dark dark:text-dark-text-muted'>Login: </span>
+                                                {system.user_login}
+                                            </p>
+                                            <p className='flex flex-wrap items-center gap-1.5'>
+                                                <span className='text-gray-dark dark:text-dark-text-muted'>Senha: </span>
+                                                <span className='break-all'>
+                                                    {visiblePasswords.includes(system.system_id)
+                                                        ? system.user_password
+                                                        : '••••••••'}
+                                                </span>
+                                                <button
+                                                    type='button'
+                                                    onClick={() => togglePasswordVisibility(system.system_id)}
+                                                    aria-label={visiblePasswords.includes(system.system_id) ? 'Ocultar senha' : 'Mostrar senha'}
+                                                    title={visiblePasswords.includes(system.system_id) ? 'Ocultar senha' : 'Mostrar senha'}
+                                                    className='text-orange-base hover:text-orange-light transition'
+                                                >
+                                                    {visiblePasswords.includes(system.system_id) ? (
+                                                        <EyeOff size={14} />
+                                                    ) : (
+                                                        <Eye size={14} />
+                                                    )}
+                                                </button>
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
             </section>
 
             <div className='pb-6'>

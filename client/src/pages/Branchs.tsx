@@ -6,6 +6,7 @@ import IconButton from '../components/IconButton.tsx'
 import ConfirmModal from '../components/ConfirmModal.tsx'
 import { Pencil, Trash, Plus } from 'lucide-react'
 import Input from '../components/Input.tsx'
+import Switch from '../components/Switch.tsx'
 import Alert from '../components/Alert.tsx'
 import Modal from '../components/Modal.tsx'
 
@@ -234,7 +235,7 @@ export default function Branchs() {
             </div>
 
             <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Editar filial' : 'Nova filial'}>
-                <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
+                <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
                     <Input
                         placeholder='Nome'
                         value={form.name}
@@ -244,14 +245,11 @@ export default function Branchs() {
                     />
 
                     {editingId && (
-                        <label className='flex items-center gap-2 text-sm text-gray-text'>
-                            <input
-                                type='checkbox'
-                                checked={form.status}
-                                onChange={(e) => setForm({ ...form, status: e.target.checked })}
-                            />
-                            Filial ativa
-                        </label>
+                        <Switch
+                            checked={form.status}
+                            onChange={(status) => setForm({ ...form, status })}
+                            label='Filial ativa'
+                        />
                     )}
 
                     {formErro && <Alert>{formErro}</Alert>}

@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth.ts'
 import Button from '../components/Button.tsx'
 import Logo from '../components/Logo.tsx'
 import Footer from '../components/Footer.tsx'
+import { LogOut } from 'lucide-react'
 
 const tabs = [
     { to: 'users', label: 'Usuários' },
@@ -33,8 +34,14 @@ export default function AdminLayout() {
                     >
                         ← Voltar
                     </Link>
-                    <Button variant='ghost' onClick={handleLogout} className='px-2 sm:px-4'>
-                        Sair
+                    <Button
+                        variant='ghost'
+                        onClick={handleLogout}
+                        aria-label='Sair'
+                        title='Sair'
+                        className='p-2 text-red-base hover:text-red-light hover:bg-red-base/10'
+                    >
+                        <LogOut size={18} />
                     </Button>
                 </div>
             </header>
