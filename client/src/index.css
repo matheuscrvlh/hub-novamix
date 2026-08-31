@@ -7,6 +7,15 @@ button:not(:disabled),
     cursor: pointer;
 }
 
+/* iOS Safari zooms in on focus when a form field's font-size is below 16px */
+@media (max-width: 767px) {
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
+
 @theme {
     --color-*: initial;
     --color-white: #ffffff;
