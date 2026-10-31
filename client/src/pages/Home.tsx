@@ -11,6 +11,7 @@ import {
     ArrowUpRight,
     Briefcase,
     ChefHat,
+    ClipboardCheck,
     ClipboardList,
     Headset,
     History,
@@ -311,6 +312,15 @@ export default function Home() {
                                 <span className='hidden md:inline'>Administração</span>
                             </Link>
                         )}
+
+                        <Link
+                            to='/checklist'
+                            title='Check-list de acessos'
+                            className='flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-gray-text transition hover:bg-gray dark:text-dark-text dark:hover:bg-dark-surface-2'
+                        >
+                            <ClipboardCheck size={18} />
+                            <span className='hidden md:inline'>Check-list</span>
+                        </Link>
 
                         <Link
                             to='/account'

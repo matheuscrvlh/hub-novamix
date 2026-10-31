@@ -115,6 +115,27 @@ async function createTables() {
                 performed_at TIMESTAMP DEFAULT NOW()
             )
         `)
+
+        const checklists = await db.query(`
+            CREATE TABLE IF NOT EXISTS checklists (
+                id SERIAL PRIMARY KEY,
+                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                items JSONB NOT NULL,
+                observation TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `)
+
+        const checklist_notifications = await db.query(`
+            CREATE TABLE IF NOT EXISTS checklist_notifications (
+                id SERIAL PRIMARY KEY,
+                checklist_id INT NOT NULL REFERENCES checklists(id) ON DELETE CASCADE,
+                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                read_at TIMESTAMPTZ,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                unique (checklist_id, user_id)
+            )
+        `)
         console.log('tabelas criadas!')
     } catch(error) {
         console.error(error)

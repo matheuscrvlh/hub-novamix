@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from '../pages/Login.tsx'
 import Home from '../pages/Home.tsx'
 import Account from '../pages/Account.tsx'
+import Checklist from '../pages/Checklist.tsx'
 import Users from '../pages/Users.tsx'
 import Branchs from '../pages/Branchs.tsx'
 import Modules from '../pages/Modules.tsx'
@@ -27,6 +28,7 @@ export default function AppRoutes() {
             <Route element={<ProtectedRoute />}>
                 <Route path='/home' element={<Home />} />
                 <Route path='/account' element={<Account />} />
+                <Route path='/checklist' element={<Checklist />} />
 
                 <Route element={<AdminRoute />}>
                     <Route path='/admin' element={<AdminLayout />}>
